@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="my_file_color_primary_dark">#5ed19d</color>
+    <color name="my_file_color_primary">#15b76d</color>
+
+    <color name="my_file_back_ground">#010101</color>
+    <color name="action_bar_back_ground">#010101</color>
+    <color name="action_bar_text_color">#fafafa</color>
+    <color name="action_bar_title_text_color">#fafafa</color>
+    <color name="action_bar_more_button_color">#fafafa</color>
+    <color name="item_back_ground">#010101</color>
+    <color name="text_color">#fcfcfc</color>
+    <color name="draw_back_ground">#2e2e2e</color>
+</resources>
