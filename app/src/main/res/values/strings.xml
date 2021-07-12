@@ -65,10 +65,10 @@
     <string name="msg_prompt_file_already_exits">File already exits</string>
 
     <string name="msg_prompt_folder_created">Folder created.</string>
-    <string name="msg_prompt_folder_not_created">Folder not created ..!</string>
+    <string name="msg_prompt_folder_not_created_you_dont_have_permission_to_create">Folder not created. You don\'t permission to create</string>
     <string name="msg_prompt_folder_already_exits">Folder already exits</string>
 
-    <string name="msg_prompt_not_renamed">Fail to renamed ..!</string>
+    <string name="msg_prompt_not_renamed_you_dont_have_permission_to_rename">Fail to renamed. You don\'t have permission to rename</string>
     <string name="msg_prompt_renamed">Successfully renamed.</string>
     <string name="msg_prompt_name_already_exits">Name already exits</string>
 
@@ -103,12 +103,11 @@
     <string name="nine">9</string>
     <string name="zero">0</string>
     <string name="please_enter_your_password">Please enter your password</string>
-    <string name="filemanager_lite">Filemanager Lite</string>
     <string name="turn_on">Turn on</string>
     <string name="storage_permission_is_required">Storage permission is required</string>
     <string name="cant_s_access_files">Cant\'s access files</string>
-    <string name="new_folder">new folder</string>
-    <string name="lbl_search">search</string>
+    <string name="new_folder">New folder</string>
+    <string name="lbl_search">Search</string>
     <string name="show_hidden_file">Show hidden file</string>
     <string name="create_folder">Create Folder</string>
     <string name="hint_lbl_new_folder">New Folder</string>
@@ -139,10 +138,9 @@
     <string name="copy">Copy</string>
     <string name="lbl_move">move</string>
     <!-- AdMob ad unit IDs -->
-    <string name="banner_home_footer">ca-app-pub-5081856790359576/9410706049</string>
-    <string name="interstitial_full_screen">ca-app-pub-5081856790359576/2461018845</string>
     <string name="there_is_no_app_to_handle_this_type_of_file">There is no app to handle this type of file</string>
     <string name="storage">Storage</string>
     <string name="empty">Empty</string>
+    <string name="my_file">My File</string>
 
 </resources>

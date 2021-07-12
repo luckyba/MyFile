@@ -23,7 +23,7 @@
             android:layout_gravity="center"
             android:padding="1dp"
             android:textColor="@color/colorBlack"
-            android:text="@string/filemanager_lite"
+            android:text="@string/my_file"
             android:textAllCaps="false"
             android:textSize="17sp" />
     </LinearLayout>

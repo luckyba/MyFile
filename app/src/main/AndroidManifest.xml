@@ -16,7 +16,7 @@
     <uses-feature android:name="android.software.webview" android:required="false"/>
 
     <application
-        android:name=".app.AppController"
+        android:name=".app.MyApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_app_logo"
         android:label="@string/app_name"
@@ -24,23 +24,23 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".activity.MainActivity"
+            android:name=".ui.activity.MainActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".activity.ImageViewActivity"
+            android:name=".ui.activity.ImageViewActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".activity.TextFileViewActivity"
+            android:name=".ui.activity.TextFileViewActivity"
             android:screenOrientation="portrait"/>
         <activity
-            android:name=".activity.AboutActivity"
+            android:name=".ui.activity.AboutActivity"
             android:screenOrientation="portrait"/>
 
-        <activity android:name=".activity.FullImageViewActivity">
+        <activity android:name=".ui.activity.FullImageViewActivity">
 
         </activity>
         <activity
-            android:name=".activity.WelcomeScreen"
+            android:name=".ui.activity.WelcomeScreen"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -48,7 +48,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.ScreenLockActivity"
+            android:name=".ui.activity.ScreenLockActivity"
             android:screenOrientation="portrait"/>
 
 <!--        <receiver-->

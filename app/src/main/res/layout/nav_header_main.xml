@@ -20,7 +20,7 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <com.luckyba.myfile.helper.ArcProgress
+        <com.luckyba.myfile.ui.helper.ArcProgress
             android:id="@+id/progress_storage"
             android:layout_width="80dp"
             android:layout_height="80dp"

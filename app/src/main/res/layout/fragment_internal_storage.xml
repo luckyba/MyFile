@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:padding="5dp"
             android:textColor="@color/color_text_selected"
-            android:text="@string/no_media_found"
+            android:text="@string/empty"
             android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
