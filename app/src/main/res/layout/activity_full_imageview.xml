@@ -19,7 +19,7 @@
             android:src="@drawable/back_arrow"/>
     </RelativeLayout>
 
-    <com.luckyba.myfile.ui.helper.TouchImageView
+    <com.luckyba.myfile.helper.TouchImageView
         android:layout_below="@+id/layout_image_title"
         android:layout_centerInParent="true"
         android:id="@+id/imageView"

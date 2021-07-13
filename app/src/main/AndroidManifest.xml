@@ -24,57 +24,30 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".ui.activity.MainActivity"
+            android:name=".MainActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ui.activity.ImageViewActivity"
+            android:name=".common.viewer.ImageViewActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ui.activity.TextFileViewActivity"
+            android:name=".common.viewer.TextFileViewActivity"
             android:screenOrientation="portrait"/>
         <activity
-            android:name=".ui.activity.AboutActivity"
+            android:name=".about.AboutActivity"
             android:screenOrientation="portrait"/>
 
-        <activity android:name=".ui.activity.FullImageViewActivity">
+        <activity android:name=".common.viewer.FullImageViewActivity">
 
         </activity>
         <activity
-            android:name=".ui.activity.WelcomeScreen"
+            android:name=".about.WelcomeScreen"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.activity.ScreenLockActivity"
-            android:screenOrientation="portrait"/>
 
-<!--        <receiver-->
-<!--            android:name="com.google.android.gms.analytics.AnalyticsReceiver"-->
-<!--            android:enabled="true">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="com.google.android.gms.analytics.ANALYTICS_DISPATCH" />-->
-<!--            </intent-filter>-->
-<!--        </receiver>-->
-<!--        <service-->
-<!--            android:name="com.google.android.gms.analytics.AnalyticsService"-->
-<!--            android:enabled="true"-->
-<!--            android:exported="false" />-->
-
-        <!--
-             Optionally, register CampaignTrackingReceiver and CampaignTrackingService to enable
-             installation campaign reporting
-        -->
-<!--        <receiver-->
-<!--            android:name="com.google.android.gms.analytics.CampaignTrackingReceiver"-->
-<!--            android:exported="true">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="com.android.vending.INSTALL_REFERRER" />-->
-<!--            </intent-filter>-->
-<!--        </receiver>-->
-<!--        <service android:name="com.google.android.gms.analytics.CampaignTrackingService" />-->
 
         <provider
             android:name="androidx.core.content.FileProvider"
