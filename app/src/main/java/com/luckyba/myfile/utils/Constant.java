@@ -1,4 +1,4 @@
-package com.luckyba.myfile.Utils;
+package com.luckyba.myfile.utils;
 
 
 import android.provider.MediaStore;
@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class Constant {
+
+    public static final int SCAN_DATA_CALLBACK = 1;
     public static final List listAudioType = Collections.unmodifiableList(
             Arrays.asList("mp3", "wav", "ogg"));
 

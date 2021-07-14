@@ -1,9 +1,12 @@
-package com.luckyba.myfile.Utils;
+package com.luckyba.myfile.utils;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Environment;
 import android.os.StatFs;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.WindowManager;
 
 import java.io.File;
 
@@ -103,5 +106,12 @@ public class Utils {
         }
     }
 
+    public static int getScreenWidth(Context context) {
+        WindowManager wm= (WindowManager) context
+                .getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics dm = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(dm);
+        return dm.widthPixels;
+    }
 
 }

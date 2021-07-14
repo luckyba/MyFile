@@ -1,4 +1,4 @@
-package com.luckyba.myfile.Animations;
+package com.luckyba.myfile.animations;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;

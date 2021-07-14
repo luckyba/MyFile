@@ -3,9 +3,14 @@ package com.luckyba.myfile.internalstorage;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,6 +21,12 @@ import com.luckyba.myfile.FactoryViewModel;
 import com.luckyba.myfile.R;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.common.CommonListener;
+import com.luckyba.myfile.common.ListPathAdapter;
+import com.luckyba.myfile.data.model.MyObserver;
+
+import java.io.File;
+
+import static com.luckyba.myfile.utils.Constant.SCAN_DATA_CALLBACK;
 
 
 public class InternalStorageFragment extends Fragment implements CommonListener.CommunicationActivity, CommonListener.ClickListener{
@@ -28,6 +39,7 @@ public class InternalStorageFragment extends Fragment implements CommonListener.
 
     private OnFragmentInteractionListener mListener;
     private InternalStorageListAdapter internalStorageListAdapter;
+    private ListPathAdapter listPathAdapter;
 
     private InternalStorageViewManager internalStorageViewManager;
     private InternalStorageViewModel internalStorageViewModel;
@@ -68,11 +80,29 @@ public class InternalStorageFragment extends Fragment implements CommonListener.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 
+        listPathAdapter = new ListPathAdapter(this);
         internalStorageListAdapter = new InternalStorageListAdapter(this);
         internalStorageViewModel = new ViewModelProvider(this, FactoryViewModel.getInstance()).get(InternalStorageViewModel.class);
-        internalStorageViewManager = new InternalStorageViewManager(mRootView, internalStorageViewModel, internalStorageListAdapter, getActivity());
+        internalStorageViewManager = new InternalStorageViewManager(mRootView, internalStorageViewModel, internalStorageListAdapter
+                , listPathAdapter, getActivity());
+
+//        MyApplication.getInstance()
+//                .getContentResolver()
+//                .registerContentObserver(
+//                        Uri.fromFile(new File(Environment.getExternalStorageDirectory().getAbsolutePath())), true,
+//                        new MyObserver(mHandler));
 
     }
+
+    private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            if (msg.what == SCAN_DATA_CALLBACK) {
+                Toast.makeText(getActivity(), " " + msg.obj.toString(), Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+    });
 
     @Override
     public void onBackPressed(int navItemIndex) {

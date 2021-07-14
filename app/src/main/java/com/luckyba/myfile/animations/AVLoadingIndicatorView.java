@@ -1,4 +1,4 @@
-package com.luckyba.myfile.Animations;
+package com.luckyba.myfile.animations;
 
 import android.annotation.TargetApi;
 import android.content.Context;

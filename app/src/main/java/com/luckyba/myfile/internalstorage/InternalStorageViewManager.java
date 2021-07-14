@@ -19,6 +19,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,13 +28,15 @@ import android.widget.ToggleButton;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.luckyba.myfile.Animations.AVLoadingIndicatorView;
+import com.luckyba.myfile.animations.AVLoadingIndicatorView;
 import com.luckyba.myfile.R;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.common.CommonFunctionInterface;
+import com.luckyba.myfile.common.ListPathAdapter;
 import com.luckyba.myfile.common.viewer.FullImageViewActivity;
 import com.luckyba.myfile.common.viewer.TextFileViewActivity;
 import com.luckyba.myfile.data.model.InternalStorageFilesModel;
@@ -64,13 +67,17 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
     private LinearLayout fileCopyLayout, fileMoveLayout;
     private MediaPlayer mediaPlayer;
     private RelativeLayout footerLayout;
-    private TextView tvFilePath;
-    private ImageView imgDelete, imgFileCopy, imgMenu;
+    private TextView imgDelete, imgFileCopy;
+    private ImageView imgMenu;
     private AVLoadingIndicatorView progressBar;
-    private TextView tvCopyFile, tvCopyCancel, tvMoveFile, tvMoveCancel;
+    private TextView tvPasteFile, tvCopyCancel, tvMoveFile, tvMoveCancel;
+    private View viewBy;
     private Activity activity;
+    private RecyclerView lvPathName;
 
+    private ListPathAdapter listPathAdapter;
     private ArrayList<String> arrayListFilePaths;
+    private ArrayList<String> arrayListFileNames;
     private ArrayList<InternalStorageFilesModel> internalStorageFilesModelArrayList;
     private InternalStorageViewModel internalStorageViewModel;
     private String rootPath;
@@ -78,20 +85,27 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
     private int selectedFilePosition;
     private final HashMap selectedFileHashMap = new HashMap();
     private boolean isCheckboxVisible = false;
+    private boolean isVerticalList = true;
+    private int numCol = 1;
+
+    private boolean isCopy = false;
 
 
     public InternalStorageViewManager(View root, InternalStorageViewModel viewModel
-            , InternalStorageListAdapter adapter, Activity activity) {
+            , InternalStorageListAdapter adapter, ListPathAdapter listPathAdapter, Activity activity) {
         mRootView = root;
         internalStorageListAdapter = adapter;
         internalStorageViewModel = viewModel;
+        this.listPathAdapter = listPathAdapter;
         this.activity = activity;
+
         init();
     }
 
     private void init() {
         internalStorageFilesModelArrayList = new ArrayList<>();
         arrayListFilePaths = new ArrayList<>();
+        arrayListFileNames = new ArrayList<>();
         rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
         internalStorageListAdapter.setData(internalStorageFilesModelArrayList);
 
@@ -99,7 +113,10 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
         initListener();
 
         arrayListFilePaths.add(rootPath);
+        arrayListFileNames.add(activity.getString(R.string.internal_storage));
         getFilesList(rootPath);
+
+
     }
 
     private void initView() {
@@ -107,19 +124,27 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
         recyclerView = (RecyclerView) mRootView.findViewById(R.id.recycler_view);
         noMediaLayout = (LinearLayout) mRootView.findViewById(R.id.noMediaLayout);
         footerLayout = (RelativeLayout) mRootView.findViewById(R.id.id_layout_footer);
-        tvFilePath = (TextView) mRootView.findViewById(R.id.id_file_path);
-        imgDelete = (ImageView) mRootView.findViewById(R.id.id_delete);
-        imgFileCopy = (ImageView) mRootView.findViewById(R.id.id_copy_file);
+        imgDelete = (TextView) mRootView.findViewById(R.id.id_delete);
+        imgFileCopy = (TextView) mRootView.findViewById(R.id.id_copy_file);
         fileCopyLayout = (LinearLayout) mRootView.findViewById(R.id.fileCopyLayout);
         fileMoveLayout = (LinearLayout) mRootView.findViewById(R.id.fileMoveLayout);
         imgMenu = (ImageView) mRootView.findViewById(R.id.id_menu);
         tvMoveFile = (TextView) mRootView.findViewById(R.id.id_move);
         tvMoveCancel = (TextView) mRootView.findViewById(R.id.id_move_cancel);
         tvCopyCancel = (TextView) mRootView.findViewById(R.id.id_copy_cancel);
-        tvCopyFile = (TextView) mRootView.findViewById(R.id.id_copy);
+        tvPasteFile = (TextView) mRootView.findViewById(R.id.id_paste);
+        viewBy = mRootView.findViewById(R.id.view_by);
+
+        lvPathName = (RecyclerView) mRootView.findViewById(R.id.lv_path_name);
+        LinearLayoutManager layoutManager
+                = new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false);
+        lvPathName.setLayoutManager(layoutManager);
+        lvPathName.setItemAnimator(new DefaultItemAnimator());
+        lvPathName.setAdapter(listPathAdapter);
 
         recyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(MyApplication.getInstance().getApplicationContext());
+        LinearLayoutManager mLayoutManager
+                = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(internalStorageListAdapter);
@@ -153,9 +178,10 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
         tvMoveFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                moveFile(tvFilePath.getText().toString());
+                moveFile(arrayListFilePaths.get(arrayListFilePaths.size()-1));
             }
         });
+
         tvCopyCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -165,12 +191,13 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
             }
         });
 
-        tvCopyFile.setOnClickListener(new View.OnClickListener() {
+        tvPasteFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                copyFile(tvFilePath.getText().toString());
+                copyFile(arrayListFilePaths.get(arrayListFilePaths.size()-1));
             }
         });
+
         imgFileCopy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -185,12 +212,12 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
             }
         });
 
+        viewBy.setOnClickListener(v -> viewBy(true));
     }
 
     private void getFilesList(String filePath) {
         rootPath = filePath;
-        tvFilePath.setText(filePath);
-        
+
         internalStorageFilesModelArrayList = internalStorageViewModel.getAllInternal(filePath);
         if (internalStorageFilesModelArrayList.isEmpty()) {
             noMediaLayout.setVisibility(View.VISIBLE);
@@ -199,6 +226,9 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
             recyclerView.setVisibility(View.VISIBLE);
             noMediaLayout.setVisibility(View.GONE);
         }
+        listPathAdapter.setData(arrayListFileNames);
+        listPathAdapter.notifyDataSetChanged();
+
         internalStorageListAdapter.setData(internalStorageFilesModelArrayList);
         internalStorageListAdapter.notifyDataSetChanged();
     }
@@ -230,6 +260,11 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                                 internalStorageListAdapter.notifyDataSetChanged();
                             }
                             arrayListFilePaths.remove(arrayListFilePaths.size() - 1);
+
+                            arrayListFileNames.remove(arrayListFileNames.size() -1);
+                            viewBy(false);
+                            listPathAdapter.setData(arrayListFileNames);
+                            listPathAdapter.notifyDataSetChanged();
                         } else {
                             activity.finish();
                             System.exit(0);
@@ -240,61 +275,80 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
     }
 
     public void onItemClick(View view, int position) {
-        InternalStorageFilesModel internalStorageFilesModel = internalStorageFilesModelArrayList.get(position);
-        if (internalStorageFilesModel.isCheckboxVisible()) {//if list item selected
-            if (internalStorageFilesModel.isSelected()) {
-                internalStorageFilesModel.setSelected(false);
-                internalStorageFilesModelArrayList.remove(position);
-                internalStorageFilesModelArrayList.add(position, internalStorageFilesModel);
-                internalStorageListAdapter.notifyDataSetChanged();
-                selectedFileHashMap.remove(position);
+        if (view.getId() == R.id.path_item_layout) {
+            if (position != arrayListFileNames.size() -1) {
+                openFile(arrayListFileNames.get(position), arrayListFilePaths.get(position));
+                int leng = arrayListFileNames.size();
+                for (int i = leng-1; i > position ; i--) {
+                    arrayListFileNames.remove(i);
+                    arrayListFilePaths.remove(i);
+                }
+                viewBy(false);
+                listPathAdapter.setData(arrayListFileNames);
+                listPathAdapter.notifyDataSetChanged();
+            }
+        } else {
+            InternalStorageFilesModel internalStorageFilesModel = internalStorageFilesModelArrayList.get(position);
+            if (internalStorageFilesModel.isCheckboxVisible()) {//if list item selected
+                if (internalStorageFilesModel.isSelected()) {
+                    internalStorageFilesModel.setSelected(false);
+                    internalStorageFilesModelArrayList.remove(position);
+                    internalStorageFilesModelArrayList.add(position, internalStorageFilesModel);
+                    internalStorageListAdapter.notifyDataSetChanged();
+                    selectedFileHashMap.remove(position);
+                } else {
+                    selectedFileHashMap.put(position, internalStorageFilesModel.getFilePath());
+                    internalStorageFilesModel.setSelected(true);
+                    selectedFilePosition = position;
+                    internalStorageFilesModelArrayList.remove(position);
+                    internalStorageFilesModelArrayList.add(position, internalStorageFilesModel);
+                    internalStorageListAdapter.notifyDataSetChanged();
+                }
             } else {
-                selectedFileHashMap.put(position, internalStorageFilesModel.getFilePath());
-                internalStorageFilesModel.setSelected(true);
-                selectedFilePosition = position;
-                internalStorageFilesModelArrayList.remove(position);
-                internalStorageFilesModelArrayList.add(position, internalStorageFilesModel);
-                internalStorageListAdapter.notifyDataSetChanged();
+                fileExtension = internalStorageFilesModel.getFileName().substring(internalStorageFilesModel.getFileName().lastIndexOf(".") + 1);//file extension (.mp3,.png,.pdf)
+                openFile(internalStorageFilesModel.getFileName(), internalStorageFilesModel.getFilePath());
             }
-        } else {
-            fileExtension = internalStorageFilesModel.getFileName().substring(internalStorageFilesModel.getFileName().lastIndexOf(".") + 1);//file extension (.mp3,.png,.pdf)
-            openFile(internalStorageFilesModel.getFileName(), internalStorageFilesModel.getFilePath());
+            if (selectedFileHashMap.isEmpty()) {
+                if (footerLayout.getVisibility() != View.GONE) {
+                    Animation topToBottom = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
+                            R.anim.top_bottom);
+                    footerLayout.startAnimation(topToBottom);
+                    footerLayout.setVisibility(View.GONE);
+                }
+            } else {
+                if (footerLayout.getVisibility() != View.VISIBLE
+                        && fileCopyLayout.getVisibility() == View.GONE
+                        && fileMoveLayout.getVisibility() == View.GONE) {
+                    Animation bottomToTop = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
+                            R.anim.bottom_top);
+                    footerLayout.startAnimation(bottomToTop);
+                    footerLayout.setVisibility(View.VISIBLE);
+                }
+            }
         }
-        if (selectedFileHashMap.isEmpty()) {
-            if (footerLayout.getVisibility() != View.GONE) {
-                Animation topToBottom = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
-                        R.anim.top_bottom);
-                footerLayout.startAnimation(topToBottom);
-                footerLayout.setVisibility(View.GONE);
-            }
-        } else {
+
+    }
+
+    public void onItemLongClick(View view, int position) {
+        if (view.getId() != R.id.path_item_layout) {
             if (footerLayout.getVisibility() != View.VISIBLE) {
                 Animation bottomToTop = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
                         R.anim.bottom_top);
                 footerLayout.startAnimation(bottomToTop);
                 footerLayout.setVisibility(View.VISIBLE);
             }
-        }
-    }
-
-    public void onItemLongClick(View view, int position) {
-        if (footerLayout.getVisibility() != View.VISIBLE) {
-            Animation bottomToTop = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
-                    R.anim.bottom_top);
-            footerLayout.startAnimation(bottomToTop);
-            footerLayout.setVisibility(View.VISIBLE);
-        }
-        for (int i = 0; i < internalStorageFilesModelArrayList.size(); i++) {
-            InternalStorageFilesModel internalStorageFilesModel = internalStorageFilesModelArrayList.get(i);
-            internalStorageFilesModel.setCheckboxVisible(true);
-            isCheckboxVisible = true;
-            if (position == i) {
-                internalStorageFilesModel.setSelected(true);
-                selectedFileHashMap.put(position, internalStorageFilesModel.getFilePath());
-                selectedFilePosition = position;
+            for (int i = 0; i < internalStorageFilesModelArrayList.size(); i++) {
+                InternalStorageFilesModel internalStorageFilesModel = internalStorageFilesModelArrayList.get(i);
+                internalStorageFilesModel.setCheckboxVisible(true);
+                isCheckboxVisible = true;
+                if (position == i) {
+                    internalStorageFilesModel.setSelected(true);
+                    selectedFileHashMap.put(position, internalStorageFilesModel.getFilePath());
+                    selectedFilePosition = position;
+                }
             }
+            internalStorageListAdapter.notifyDataSetChanged();
         }
-        internalStorageListAdapter.notifyDataSetChanged();
     }
 
     public void setDataChange(InternalStorageFilesModel data) {
@@ -310,7 +364,13 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                 internalStorageFilesModelArrayList.clear();
                 arrayListFilePaths.add(filePath);
                 getFilesList(filePath);
+
+                viewBy(false);
                 internalStorageListAdapter.notifyDataSetChanged();
+
+                arrayListFileNames.add(fileName);
+                listPathAdapter.setData(arrayListFileNames);
+                listPathAdapter.notifyDataSetChanged();
             } else {//Toast to your not openable type
                 Toast.makeText(MyApplication.getInstance().getApplicationContext(), "Folder can't be read!", Toast.LENGTH_SHORT).show();
             }
@@ -526,6 +586,7 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
 
     }
 
+    // only copy file
     @Override
     public void copyFile(String outputPath) {
         progressBar.setVisibility(View.VISIBLE);
@@ -557,16 +618,17 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                 internalStorageFilesModelArrayList.add(model);
             }
             internalStorageListAdapter.notifyDataSetChanged();//refresh the adapter
-            selectedFileHashMap.clear();
-            footerLayout.setVisibility(View.GONE);
-            fileCopyLayout.setVisibility(View.GONE);
-            progressBar.setVisibility(View.GONE);
+
         } catch (Exception e) {
             MyApplication.getInstance().trackException(e);
             e.printStackTrace();
-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), "unable to process this action", Toast.LENGTH_SHORT).show();
-            progressBar.setVisibility(View.GONE);
+            Toast.makeText(MyApplication.getInstance().getApplicationContext(), "unable to process this action" + e, Toast.LENGTH_SHORT).show();
         }
+
+        selectedFileHashMap.clear();
+        footerLayout.setVisibility(View.GONE);
+        fileCopyLayout.setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
     }
 
     @Override
@@ -878,6 +940,39 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                 return true;
             }
         });
+    }
+
+    private void viewBy(boolean click) {
+        int tmp;
+        if (internalStorageFilesModelArrayList.size() % 2 == 0) {
+            tmp = internalStorageFilesModelArrayList.size() / 2;
+        } else {
+            tmp = internalStorageFilesModelArrayList.size() / 2 + 1;
+        }
+        if (isVerticalList && click || !isVerticalList && !click) {
+            numCol = tmp;
+            GridLayoutManager layoutManager;
+            if (numCol > 0 ){
+                layoutManager =
+                        new GridLayoutManager(activity, numCol);
+            } else {
+                layoutManager =
+                        new GridLayoutManager(activity, 10);
+            }
+            layoutManager.setOrientation(RecyclerView.HORIZONTAL);
+            recyclerView.setLayoutManager(layoutManager);
+            if (click)
+                isVerticalList = false;
+        } else {
+            numCol = 1;
+            GridLayoutManager layoutManager =
+                    new GridLayoutManager(activity, numCol);
+            layoutManager.setOrientation(RecyclerView.VERTICAL);
+            recyclerView.setLayoutManager(layoutManager);
+            if (click)
+                isVerticalList = true;
+        }
+
     }
 
 }

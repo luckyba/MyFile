@@ -14,7 +14,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.luckyba.myfile.R;
-import com.luckyba.myfile.Utils.Utils;
+import com.luckyba.myfile.utils.Utils;
 
 
 

@@ -64,7 +64,7 @@ public class ImagesListFragment extends Fragment implements CommonListener.Click
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         imagesListViewModel = new ViewModelProvider(this, FactoryViewModel.getInstance()).get(ImagesListViewModel.class);
-        imagesListAdapter = new ImagesListAdapter(this);
+        imagesListAdapter = new ImagesListAdapter(this, getContext());
         imagesListManager = new ImagesListManager(mRootView, imagesListViewModel, imagesListAdapter, getActivity());
     }
 

@@ -9,7 +9,7 @@
 
 <item >
     <shape>
-        <solid android:color="@color/colorWhite"/>
+        <solid android:color="@color/my_file_back_ground"/>
     </shape>
 </item>
 

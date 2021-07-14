@@ -25,13 +25,14 @@ import androidx.core.content.ContextCompat;
 import com.luckyba.myfile.MainActivity;
 import com.luckyba.myfile.R;
 import com.luckyba.myfile.app.MyApplication;
+import com.luckyba.myfile.utils.PermissionUtils;
 
 public class WelcomeScreen extends AppCompatActivity {
     private Button btnTurnOn;
     private LinearLayout layoutDeniedPermissionLayout;
-    private static final int REQUEST_CODE_WRITE_STORAGE = 102;
     private static final String TAG = WelcomeScreen.class.getSimpleName();
     private static final String PERMISSION_WRITE_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,8 +62,8 @@ public class WelcomeScreen extends AppCompatActivity {
     }
 
     private void accessStorage() {
-        int hasWriteStoragePermission = ContextCompat.checkSelfPermission(getApplicationContext(), PERMISSION_WRITE_STORAGE);
-        if (hasWriteStoragePermission != PackageManager.PERMISSION_GRANTED) {
+        boolean hasWriteStoragePermission = PermissionUtils.hasListPermission(this, PermissionUtils.List_permission);
+        if (!hasWriteStoragePermission) {
             boolean showRequestAgain = ActivityCompat.shouldShowRequestPermissionRationale(WelcomeScreen.this, PERMISSION_WRITE_STORAGE);
             Log.e(TAG, "showRequestAgain: " + showRequestAgain);
             if (showRequestAgain) {
@@ -70,8 +71,8 @@ public class WelcomeScreen extends AppCompatActivity {
                         .setPositiveButton("ALLOW", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ActivityCompat.requestPermissions(WelcomeScreen.this, new String[]{PERMISSION_WRITE_STORAGE},
-                                        REQUEST_CODE_WRITE_STORAGE);
+                                ActivityCompat.requestPermissions(WelcomeScreen.this, PermissionUtils.List_permission,
+                                        PermissionUtils.MY_FILE_REQUEST_CODE);
                             }
                         }).setNegativeButton("DENY", new DialogInterface.OnClickListener() {
                     @Override
@@ -81,7 +82,7 @@ public class WelcomeScreen extends AppCompatActivity {
                 }).show();
                 return;
             } else {
-                ActivityCompat.requestPermissions(this, new String[]{PERMISSION_WRITE_STORAGE}, REQUEST_CODE_WRITE_STORAGE);
+                PermissionUtils.requestPermissions(this, PermissionUtils.List_permission, PermissionUtils.MY_FILE_REQUEST_CODE);
                 return;
             }
         } else {
@@ -92,8 +93,7 @@ public class WelcomeScreen extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_WRITE_STORAGE:
+        if (requestCode == PermissionUtils.MY_FILE_REQUEST_CODE) {
                 if (grantResults.length > 0) {
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                         showActivity();
@@ -124,7 +124,7 @@ public class WelcomeScreen extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                     ActivityCompat.requestPermissions(WelcomeScreen.this, new String[]{PERMISSION_WRITE_STORAGE},
-                                            REQUEST_CODE_WRITE_STORAGE);
+                                            PermissionUtils.MY_FILE_REQUEST_CODE);
                                 }
                             });
                             builder.show();
@@ -135,8 +135,6 @@ public class WelcomeScreen extends AppCompatActivity {
                         Log.e(TAG, "last else");
                     }
                 }
-                break;
-            default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
@@ -149,7 +147,7 @@ public class WelcomeScreen extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                goToSettings();
+                PermissionUtils.goToAppSettings(getParent());
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -159,17 +157,6 @@ public class WelcomeScreen extends AppCompatActivity {
             }
         });
         builder.show();
-    }
-
-    private void goToSettings() {
-        Intent i = new Intent();
-        i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        i.addCategory(Intent.CATEGORY_DEFAULT);
-        i.setData(Uri.parse("package:" + getPackageName()));
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-        i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-        startActivity(i);
     }
 
     @Override

@@ -28,7 +28,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.luckyba.myfile.Animations.AVLoadingIndicatorView;
+import com.luckyba.myfile.animations.AVLoadingIndicatorView;
 import com.luckyba.myfile.R;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.common.CommonFunctionInterface;

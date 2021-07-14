@@ -10,7 +10,7 @@ import android.webkit.WebViewClient;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.luckyba.myfile.Animations.AVLoadingIndicatorView;
+import com.luckyba.myfile.animations.AVLoadingIndicatorView;
 import com.luckyba.myfile.R;
 import com.luckyba.myfile.app.MyApplication;
 

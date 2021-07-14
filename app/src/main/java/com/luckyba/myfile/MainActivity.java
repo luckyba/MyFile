@@ -2,8 +2,10 @@ package com.luckyba.myfile;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,7 +22,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.navigation.NavigationView;
-import com.luckyba.myfile.Utils.Utils;
+import com.luckyba.myfile.utils.Utils;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.audios.AudiosListFragment;
 import com.luckyba.myfile.common.CommonListener;
@@ -41,7 +43,7 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG_VIDEOS_LIST = "VIDEOS";
     private static final String TAG_SETTINGS = "SETTINGS";
     public static String FG_TAG = TAG_INTERNAL_STORAGE;
-    public static int navItemIndex = 0;
+    public static int navItemIndex = 3;
     NavigationView navigationView;
     private DrawerLayout drawer;
     private String[] activityTitles;
@@ -49,7 +51,7 @@ public class MainActivity extends AppCompatActivity
     public static CommonListener.CommunicationActivity buttonBackPressListener;
     private static final String TAG = MainActivity.class.getSimpleName();
     private ArcProgress progressStorage;
-    private TextView lblFreeStorage;
+    private TextView tvFreeStorage;
     private Handler handler;
     private Runnable runnable;
     private int i = 5;
@@ -61,6 +63,8 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
         toolbar.setBackgroundColor(getColor(R.color.action_bar_back_ground));
         getWindow().setNavigationBarDividerColor(getColor(R.color.action_bar_back_ground));
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
         mHandler = new Handler();
         activityTitles = getResources().getStringArray(R.array.nav_item_activity_titles);
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -85,25 +89,31 @@ public class MainActivity extends AppCompatActivity
         navigationView = (NavigationView) findViewById(R.id.nav_view);
         View headerLayout = navigationView.getHeaderView(0);
         progressStorage = (ArcProgress) headerLayout.findViewById(R.id.progress_storage);
-        lblFreeStorage = (TextView) headerLayout.findViewById(R.id.id_free_space);
+        tvFreeStorage = (TextView) headerLayout.findViewById(R.id.id_free_space);
         navigationView.setNavigationItemSelectedListener(this);
         if (savedInstanceState == null) {
-            navItemIndex = 0;
+            navItemIndex = 3;
             FG_TAG = TAG_INTERNAL_STORAGE;
-            navigationView.getMenu().getItem(0).setChecked(true);
+            navigationView.setCheckedItem(R.id.nav_internal_storage);
             loadHomeFragment();
             setRamStorageDetails(navItemIndex);
-            final Dialog homeGuideDialog = new Dialog(MainActivity.this, android.R.style.Theme_Translucent_NoTitleBar);
-            homeGuideDialog.setContentView(R.layout.custom_guide_dialog);
-            homeGuideDialog.show();
-            RelativeLayout layout = (RelativeLayout) homeGuideDialog.findViewById(R.id.guide_layout);
-            layout.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View arg0) {
-                    homeGuideDialog.dismiss();
-                }
-            });
+            if (sharedPref.getBoolean("first_time", true)) {
+                final Dialog homeGuideDialog = new Dialog(MainActivity.this, android.R.style.Theme_Translucent_NoTitleBar);
 
+                homeGuideDialog.setContentView(R.layout.custom_guide_dialog);
+                homeGuideDialog.show();
+                RelativeLayout layout = (RelativeLayout) homeGuideDialog.findViewById(R.id.guide_layout);
+                layout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View arg0) {
+                        homeGuideDialog.dismiss();
+                    }
+                });
+            }
+
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("first_time", false);
+            editor.apply();
         }
         handler = new Handler();
         runnable = new Runnable() {
@@ -155,15 +165,15 @@ public class MainActivity extends AppCompatActivity
 
     private Fragment getHomeFragment() {
         switch (navItemIndex) {
-            case 0:
-                return new InternalStorageFragment();
-            case 1:
-                return new ExternalStorageFragment();
-            case 2:
-                return new ImagesListFragment();
             case 3:
-                return new AudiosListFragment();
+                return new InternalStorageFragment();
             case 4:
+                return new ExternalStorageFragment();
+            case 0:
+                return new ImagesListFragment();
+            case 1:
+                return new AudiosListFragment();
+            case 2:
                 return new VideosListFragment();
             case 5:
                 return new SettingsFragment();
@@ -185,11 +195,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (navItemIndex == 0) {
+        if (navItemIndex == 3) {
             getMenuInflater().inflate(R.menu.main_internal_storage, menu);
             return true;
         }
-        if (navItemIndex == 1) {
+        if (navItemIndex == 4) {
             getMenuInflater().inflate(R.menu.main_external_storage, menu);
             return true;
         }
@@ -234,39 +244,34 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         switch (id) {
             case R.id.nav_internal_storage:
-                navItemIndex = 0;
+                navItemIndex = 3;
                 FG_TAG = TAG_INTERNAL_STORAGE;
                 setRamStorageDetails(navItemIndex);
                 break;
             case R.id.nav_external_storage:
-                navItemIndex = 1;
+                navItemIndex = 4;
                 FG_TAG = TAG_EXTERNAL_STORAGE;
                 setRamStorageDetails(navItemIndex);
                 break;
             case R.id.nav_images:
-                navItemIndex = 2;
+                navItemIndex = 0;
                 FG_TAG = TAG_IMAGES_LIST;
                 break;
             case R.id.nav_audios:
-                navItemIndex = 3;
+                navItemIndex = 1;
                 FG_TAG = TAG_AUDIOS_LIST;
                 break;
             case R.id.nav_videos:
-                navItemIndex = 4;
+                navItemIndex = 2;
                 FG_TAG = TAG_VIDEOS_LIST;
                 break;
-            case R.id.nav_share:
-                Intent sharingIntent = new Intent(Intent.ACTION_SEND);
-                sharingIntent.setType("text/plain");
-                sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "FlyCabs");
-                sharingIntent.putExtra(Intent.EXTRA_TEXT, "Download  here to visit https://play.google.com/store/apps/details?id=com.droids.tamada.filemanager&hl=en ");
-                startActivity(Intent.createChooser(sharingIntent, "Share via"));
-                break;
+
             case R.id.nav_settings:
                 navItemIndex = 5;
                 FG_TAG = TAG_SETTINGS;
                 break;
         }
+        navigationView.setCheckedItem(id);
         removeFragment();
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -274,11 +279,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setRamStorageDetails(int navItemIndex) {
-        if (navItemIndex == 0) {
-            lblFreeStorage.setText(Utils.getAvailableInternalMemorySize());
+        if (navItemIndex == 3) {
+            tvFreeStorage.setText(Utils.getAvailableInternalMemorySize());
             progressStorage.setProgress(Utils.getAvailableInternalStoragePercentage());
-        } else if (navItemIndex == 1) {
-            lblFreeStorage.setText(Utils.getAvailableExternalMemorySize());
+        } else if (navItemIndex == 4) {
+            tvFreeStorage.setText(Utils.getAvailableExternalMemorySize());
             progressStorage.setProgress(Utils.getAvailableExternalStoragePercentage());
 
         }
@@ -290,10 +295,10 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            if (navItemIndex > 1) {
-                navItemIndex = 0;
+            if (navItemIndex != 3) {
+                navItemIndex = 3;
                 FG_TAG = TAG_INTERNAL_STORAGE;
-                navigationView.getMenu().getItem(0).setChecked(true);
+                navigationView.setCheckedItem(R.id.nav_internal_storage);
                 loadHomeFragment();
             } else {
                 buttonBackPressListener.onBackPressed(navItemIndex);

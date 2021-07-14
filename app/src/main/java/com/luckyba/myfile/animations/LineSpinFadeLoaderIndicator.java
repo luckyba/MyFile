@@ -1,4 +1,4 @@
-package com.luckyba.myfile.Animations;
+package com.luckyba.myfile.animations;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
