@@ -84,7 +84,7 @@ public class InternalStorageFragment extends Fragment implements CommonListener.
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 
         listPathAdapter = new ListPathAdapter(this);
-        internalStorageListAdapter = new InternalStorageListAdapter(this);
+        internalStorageListAdapter = new InternalStorageListAdapter(getContext(), this);
         internalStorageViewModel = new ViewModelProvider(this, FactoryViewModel.getInstance()).get(InternalStorageViewModel.class);
         internalStorageViewManager = new InternalStorageViewManager(mRootView, internalStorageViewModel, internalStorageListAdapter
                 , listPathAdapter, getActivity());

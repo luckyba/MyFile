@@ -577,6 +577,8 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
 
     @Override
     public void renameFile(Dialog menuDialog, String fileName, String filePath, int selectedFilePosition) {
+        footerLayout.setVisibility(View.GONE);
+
         final Dialog dialogRenameFile = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar);
         dialogRenameFile.setContentView(R.layout.custom_rename_file_dialog);
         dialogRenameFile.show();
@@ -587,6 +589,7 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
         btnRename.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 if (txtRenameFile.getText().toString().trim().length() == 0) {
                     Toast.makeText(MyApplication.getInstance().getApplicationContext(), "Please enter file name", Toast.LENGTH_SHORT).show();
                 } else {
@@ -611,16 +614,16 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                             internalStorageListAdapter.notifyDataSetChanged();
                             dialogRenameFile.dismiss();
                             menuDialog.dismiss();
-                            footerLayout.setVisibility(View.GONE);
                         } else {
                             Toast.makeText(MyApplication.getInstance().getApplicationContext(), MyApplication.getInstance().getApplicationContext().getString(R.string.msg_prompt_not_renamed_you_dont_have_permission_to_rename), Toast.LENGTH_SHORT).show();
                             dialogRenameFile.dismiss();
                             menuDialog.dismiss();
-                            footerLayout.setVisibility(View.GONE);
                         }
                     }
                 }
+                hideAllCheckBook();
             }
+
         });
         btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -932,4 +935,11 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
 
     }
 
+    private void hideAllCheckBook () {
+        for (InternalStorageFilesModel data: internalStorageFilesModelArrayList
+             ) {
+            data.setCheckboxVisible(false);
+        }
+        internalStorageListAdapter.notifyDataSetChanged();
+    }
 }
