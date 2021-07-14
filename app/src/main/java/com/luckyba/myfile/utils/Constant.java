@@ -12,6 +12,18 @@ import java.util.List;
 public class Constant {
 
     public static final int SCAN_DATA_CALLBACK = 1;
+
+    public static final int FOLDER_TYPE = 0;
+    public static final int IMAGE_TYPE = 1;
+    public static final int AUDIO_TYPE = 2;
+    public static final int VIDEO_TYPE = 3;
+    public static final int DOCUMENT_TYPE = 4;
+    public static final int INSTALL_TYPE = 5;
+    public static final int PDF_TYPE = 6;
+    public static final int TXT_TYPE = 7;
+    public static final int EXTRACT_TYPE = 8;
+    public static final int UNKNOW_TYPE = 9;
+
     public static final List listAudioType = Collections.unmodifiableList(
             Arrays.asList("mp3", "wav", "ogg"));
 

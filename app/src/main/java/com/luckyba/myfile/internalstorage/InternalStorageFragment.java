@@ -22,6 +22,7 @@ import com.luckyba.myfile.R;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.common.CommonListener;
 import com.luckyba.myfile.common.ListPathAdapter;
+import com.luckyba.myfile.data.model.DataObserver;
 import com.luckyba.myfile.data.model.MyObserver;
 
 import java.io.File;
@@ -44,6 +45,8 @@ public class InternalStorageFragment extends Fragment implements CommonListener.
     private InternalStorageViewManager internalStorageViewManager;
     private InternalStorageViewModel internalStorageViewModel;
     private View mRootView;
+
+    private DataObserver dataObserve;
 
     public InternalStorageFragment() {
         // Required empty public constructor
@@ -89,8 +92,10 @@ public class InternalStorageFragment extends Fragment implements CommonListener.
 //        MyApplication.getInstance()
 //                .getContentResolver()
 //                .registerContentObserver(
-//                        Uri.fromFile(new File(Environment.getExternalStorageDirectory().getAbsolutePath())), true,
+//                        Uri.fromFile(Environment.getExternalStorageDirectory()), true,
 //                        new MyObserver(mHandler));
+        dataObserve = new DataObserver(Environment.getExternalStorageDirectory());
+        dataObserve.startWatching();
 
     }
 
@@ -130,6 +135,7 @@ public class InternalStorageFragment extends Fragment implements CommonListener.
     public void onDestroy() {
         internalStorageViewModel = null;
         internalStorageListAdapter = null;
+        dataObserve.stopWatching();
         super.onDestroy();
     }
 

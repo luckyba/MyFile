@@ -6,6 +6,7 @@ import com.luckyba.myfile.data.model.InternalStorageFilesModel;
 import com.luckyba.myfile.data.model.MediaFileListModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public interface RepositoryInterface {
 
@@ -17,4 +18,8 @@ public interface RepositoryInterface {
     ArrayList<ExternalStorageFilesModel> getAllExternalFile (String filePath);
 
     ArrayList<InternalStorageFilesModel> getAllInternalFile (String filePath);
+
+    ArrayList<InternalStorageFilesModel> move (String outputPath, HashMap selectedFileHashMap);
+
+    ArrayList<InternalStorageFilesModel> copy (String outputPath, HashMap selectedFileHashMap);
 }

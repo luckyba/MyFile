@@ -3,8 +3,11 @@ package com.luckyba.myfile.internalstorage;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -40,6 +43,7 @@ import com.luckyba.myfile.common.ListPathAdapter;
 import com.luckyba.myfile.common.viewer.FullImageViewActivity;
 import com.luckyba.myfile.common.viewer.TextFileViewActivity;
 import com.luckyba.myfile.data.model.InternalStorageFilesModel;
+import com.luckyba.myfile.utils.Constant;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -116,7 +120,7 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
         arrayListFileNames.add(activity.getString(R.string.internal_storage));
         getFilesList(rootPath);
 
-
+        startWatchingExternalStorage();
     }
 
     private void initView() {
@@ -143,11 +147,30 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
         lvPathName.setAdapter(listPathAdapter);
 
         recyclerView.setHasFixedSize(true);
+
         LinearLayoutManager mLayoutManager
                 = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setNestedScrollingEnabled(false);
         recyclerView.setAdapter(internalStorageListAdapter);
+
+    }
+
+    private BroadcastReceiver mExternalStorageReceiver;
+
+    void startWatchingExternalStorage() {
+        mExternalStorageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i("fdsfsf", "Storage: " + intent.getData());
+
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+        filter.addAction(Intent.ACTION_MEDIA_REMOVED);
+        activity.registerReceiver(mExternalStorageReceiver, filter);
 
     }
 
@@ -249,7 +272,7 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                     internalStorageListAdapter.notifyDataSetChanged();
                     isCheckboxVisible = false;
                 } else {
-                    if (navItemIndex == 0) {
+                    if (navItemIndex == 3) {
                         if (arrayListFilePaths.size() == 1) {
                             Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.please_click_back_again_to_exist), Toast.LENGTH_SHORT).show();
                         }
@@ -528,102 +551,23 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
     @Override
     public void moveFile(String outputPath) {
         progressBar.setVisibility(View.VISIBLE);
-        try {
-            Set set = selectedFileHashMap.keySet();
-            Iterator itr = set.iterator();
-            while (itr.hasNext()) {
-                int i = Integer.parseInt(itr.next().toString());
-                File file = new File((String) selectedFileHashMap.get(i));
-                InputStream in = null;
-                OutputStream out = null;
-                try {
-                    //create output directory if it doesn't exist
-                    File dir = new File(outputPath);
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
-                    in = new FileInputStream((String) selectedFileHashMap.get(i));
-                    out = new FileOutputStream(outputPath + "/" + file.getName());
-                    byte[] buffer = new byte[1024];
-                    int read;
-                    while ((read = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, read);
-                    }
-                    in.close();
-                    in = null;
-                    // write the output file
-                    out.flush();
-                    out.close();
-                    out = null;
-                    // delete the original file
-                    new File((String) selectedFileHashMap.get(i)).delete();
-                } catch (Exception e) {
-                    MyApplication.getInstance().trackException(e);
-                    Log.e("tag", e.getMessage());
-                }
-                InternalStorageFilesModel model = new InternalStorageFilesModel();
-                model.setSelected(false);
-                model.setFilePath(outputPath + "/" + file.getName());
-                model.setFileName(file.getName());
-                if (new File(outputPath + "/" + file.getName()).isDirectory()) {
-                    model.setIsDir(true);
-                } else {
-                    model.setIsDir(false);
-                }
-                internalStorageFilesModelArrayList.add(model);
-            }
-            internalStorageListAdapter.notifyDataSetChanged();//refresh the adapter
-            selectedFileHashMap.clear();
-            footerLayout.setVisibility(View.GONE);
-            fileMoveLayout.setVisibility(View.GONE);
-            progressBar.setVisibility(View.GONE);
-        } catch (Exception e) {
-            MyApplication.getInstance().trackException(e);
-            e.printStackTrace();
-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), "unable to process this action", Toast.LENGTH_SHORT).show();
-            progressBar.setVisibility(View.GONE);
-        }
-
+        internalStorageFilesModelArrayList.addAll(internalStorageViewModel.move(outputPath, selectedFileHashMap));
+        internalStorageListAdapter.notifyDataSetChanged();//refresh the adapter
+        selectedFileHashMap.clear();
+        footerLayout.setVisibility(View.GONE);
+        fileMoveLayout.setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
     }
 
     // only copy file
     @Override
     public void copyFile(String outputPath) {
         progressBar.setVisibility(View.VISIBLE);
-        try {
-            Set set = selectedFileHashMap.keySet();
-            Iterator itr = set.iterator();
-            while (itr.hasNext()) {
-                int i = Integer.parseInt(itr.next().toString());
-                File file = new File((String) selectedFileHashMap.get(i));
-                InputStream in = new FileInputStream((String) selectedFileHashMap.get(i));
-                OutputStream out = new FileOutputStream(outputPath + "/" + file.getName());
-                // Transfer bytes from in to out
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
-                }
-                in.close();
-                out.close();
-                InternalStorageFilesModel model = new InternalStorageFilesModel();
-                model.setSelected(false);
-                model.setFilePath(outputPath + "/" + file.getName());
-                model.setFileName(file.getName());
-                if (new File(outputPath + "/" + file.getName()).isDirectory()) {
-                    model.setIsDir(true);
-                } else {
-                    model.setIsDir(false);
-                }
-                internalStorageFilesModelArrayList.add(model);
-            }
-            internalStorageListAdapter.notifyDataSetChanged();//refresh the adapter
 
-        } catch (Exception e) {
-            MyApplication.getInstance().trackException(e);
-            e.printStackTrace();
-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), "unable to process this action" + e, Toast.LENGTH_SHORT).show();
-        }
+        internalStorageFilesModelArrayList.addAll(internalStorageViewModel.copy(outputPath, selectedFileHashMap));
+
+        internalStorageListAdapter.setData(internalStorageFilesModelArrayList);
+        internalStorageListAdapter.notifyDataSetChanged();//refresh the adapter
 
         selectedFileHashMap.clear();
         footerLayout.setVisibility(View.GONE);
@@ -653,15 +597,15 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                         final File oldFile = new File(filePath);//create file with old name
                         boolean isRenamed = oldFile.renameTo(renamedFile);
                         if (isRenamed) {
-                            InternalStorageFilesModel model = internalStorageFilesModelArrayList.get(selectedFilePosition);
-                            model.setFileName(txtRenameFile.getText().toString());
-                            model.setFilePath(renamedFile.getPath());
-                            if (renamedFile.isDirectory()) {
-                                model.setIsDir(true);
-                            } else {
-                                model.setIsDir(false);
-                            }
-                            model.setSelected(false);
+                            InternalStorageFilesModel model = new InternalStorageFilesModel
+                                    .Builder(txtRenameFile.getText().toString(), renamedFile.getPath())
+                                    .setSelected(false)
+                                    .setDir(renamedFile.isDirectory())
+                                    .setType(internalStorageFilesModelArrayList.get(selectedFilePosition).getType())
+                                    .setCheckBoxVisible(false)
+                                    .build();
+                                    internalStorageFilesModelArrayList.get(selectedFilePosition)
+                            ;
                             internalStorageFilesModelArrayList.remove(selectedFilePosition);
                             internalStorageFilesModelArrayList.add(selectedFilePosition, model);
                             internalStorageListAdapter.notifyDataSetChanged();
@@ -710,7 +654,13 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                         } else {
                             boolean isCreated = file.createNewFile();
                             if (isCreated) {
-                                InternalStorageFilesModel model = new InternalStorageFilesModel(fileName + ".txt", file.getPath(), false, false, false);
+                                InternalStorageFilesModel model = new InternalStorageFilesModel
+                                        .Builder(fileName + ".txt", file.getPath())
+                                        .setDir(false)
+                                        .setSelected(false)
+                                        .setCheckBoxVisible(false)
+                                        .setType(Constant.DOCUMENT_TYPE)
+                                        .build();
                                 internalStorageFilesModelArrayList.add(model);
                                 internalStorageListAdapter.notifyDataSetChanged();
                                 Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_created), Toast.LENGTH_SHORT).show();
@@ -758,7 +708,14 @@ public class InternalStorageViewManager implements CommonFunctionInterface {
                         } else {
                             boolean isFolderCreated = file.mkdir();
                             if (isFolderCreated) {
-                                InternalStorageFilesModel model = new InternalStorageFilesModel(folderName, rootPath + "/" + folderName, true, false, false);
+                                InternalStorageFilesModel model = new InternalStorageFilesModel
+                                        .Builder(folderName, rootPath + "/" + folderName)
+                                        .setSelected(false)
+                                        .setCheckBoxVisible(false)
+                                        .setDir(true)
+                                        .setType(Constant.FOLDER_TYPE)
+                                        .build();
+
                                 internalStorageFilesModelArrayList.add(model);
                                 internalStorageListAdapter.notifyDataSetChanged();
                                 Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_created), Toast.LENGTH_SHORT).show();

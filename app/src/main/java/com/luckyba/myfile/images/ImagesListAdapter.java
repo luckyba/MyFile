@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,10 +58,10 @@ public class ImagesListAdapter extends RecyclerView.Adapter<ImagesListViewHolder
         holder.lblFileCreated.setText(mediaFileListModel.getFileCreatedTime().substring(0,19));
         // using glide to load image
         Glide.with(mContext)
-                .load(mediaFileListModel.getFileName())
+                .load(Uri.fromFile(new File(mediaFileListModel.getFileName())))
                 .apply(new RequestOptions().centerCrop())
                 .into(holder.imgItemIcon);
-        setTransitionName(holder.imgItemIcon, String.valueOf(position) + "_image");
+//        setTransitionName(holder.imgItemIcon, String.valueOf(position) + "_image");
 
 //        File imgFile = new File(mediaFileListModel.getFilePath());
 //        if (imgFile.exists()) {

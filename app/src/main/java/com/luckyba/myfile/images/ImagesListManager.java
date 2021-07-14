@@ -1,15 +1,18 @@
 package com.luckyba.myfile.images;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.luckyba.myfile.R;
+import com.luckyba.myfile.common.viewer.FullImageViewActivity;
 import com.luckyba.myfile.utils.Constant;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.data.model.MediaFileListModel;
@@ -66,10 +69,12 @@ public class ImagesListManager {
     }
 
     public void onItemClick (View view, int pos) {
-
+        Intent imageIntent = new Intent(MyApplication.getInstance(), FullImageViewActivity.class);
+        imageIntent.putExtra("imagePath", imageListModelsArray.get(pos).getFilePath());
+        activity.startActivity(imageIntent);
     }
 
     public void onItemLongClick (View view, int pos) {
-
+        Toast.makeText(activity, " Long click item image pos "+ pos, Toast.LENGTH_LONG).show();
     }
 }
