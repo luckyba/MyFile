@@ -2,10 +2,10 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/rectangle_ripple_effect"
     android:clickable="true"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
+    android:background="?android:attr/selectableItemBackground"
     android:padding="8dp">
 
 
@@ -37,7 +37,6 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:padding="5dp"
-            android:textColor="@color/color_text_selected"
             android:textSize="18sp" />
 
         <RelativeLayout

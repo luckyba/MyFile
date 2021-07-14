@@ -11,6 +11,7 @@ import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -139,6 +140,7 @@ public class AudiosViewManager {
     }
 
     public void onItemLongClick(View view, int pos) {
+        Toast.makeText(activity, " Long click item audio pos "+ pos , Toast.LENGTH_LONG).show();
 
     }
 }

@@ -9,7 +9,10 @@ import android.view.ViewGroup;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.luckyba.myfile.R;
+import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.common.CommonListener;
 import com.luckyba.myfile.data.model.MediaFileListModel;
 
@@ -49,15 +52,25 @@ public class VideosListAdapter extends RecyclerView.Adapter<VideoListViewHolder>
         });
 
         MediaFileListModel mediaFileListModel = mediaFileListModels.get(position);
-        Bitmap bMap = null;
-        try {
-            bMap = ThumbnailUtils.createVideoThumbnail(new File(mediaFileListModel.getFilePath()), new Size(50,50), null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        holder.imgItemIcon.setImageBitmap(bMap);
+
+        int positionInMillis = 0;
+        long interval = positionInMillis * 1000;;
+        RequestOptions options = new RequestOptions().frame(interval);
+        Glide.with(MyApplication.getInstance().getApplicationContext())
+                .asBitmap()
+                .load(new File(mediaFileListModel.getFilePath()))
+                .override(50,50)// Example
+                .apply(options)
+                .into(holder.imgItemIcon);
+
+//        Bitmap bMap = null;
+//        try {
+//            bMap = ThumbnailUtils.createVideoThumbnail(new File(mediaFileListModel.getFilePath()), new Size(50,50), null);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
         holder.tvFileName.setText(mediaFileListModel.getFileName());
-        holder.imgItemIcon.setImageBitmap(bMap);
     }
 
     @Override
