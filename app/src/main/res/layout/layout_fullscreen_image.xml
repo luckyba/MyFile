@@ -5,7 +5,7 @@
     android:background="#000"
     android:orientation="vertical">
 
-    <com.luckyba.myfile.ui.helper.TouchImageView
+    <com.luckyba.myfile.helper.TouchImageView
         android:id="@+id/imgDisplay"
         android:layout_centerInParent="true"
         android:layout_width="fill_parent"

@@ -73,11 +73,11 @@
     <string name="msg_prompt_name_already_exits">Name already exits</string>
 
     <string-array name="nav_item_activity_titles">
-        <item>Internal Storage</item>
-        <item>External Storage</item>
         <item>Images</item>
         <item>Audios</item>
         <item>Videos</item>
+        <item>Internal Storage</item>
+        <item>External Storage</item>
         <item>Settings</item>
     </string-array>
 
@@ -107,7 +107,6 @@
     <string name="storage_permission_is_required">Storage permission is required</string>
     <string name="cant_s_access_files">Cant\'s access files</string>
     <string name="new_folder">New folder</string>
-    <string name="lbl_search">Search</string>
     <string name="show_hidden_file">Show hidden file</string>
     <string name="create_folder">Create Folder</string>
     <string name="hint_lbl_new_folder">New Folder</string>
@@ -124,11 +123,11 @@
     <string name="lbl_delete_multiple_files">"Are you sure you want to delete the selected files?"</string>
     <string name="delete">Delete</string>
     <string name="about">About</string>
-    <string name="version">Version 2.1</string>
+    <string name="version">Version 1.0</string>
     <string name="insert_sd_card">Insert SD Card</string>
     <string name="extract">Extract</string>
     <string name="navigation">Navigation</string>
-    <string name="create_file_folder">Create file/folder</string>
+    <string name="search_menu">Search /Menu</string>
     <string name="explore_options_and_settings">Explore options and settings</string>
     <string name="long_press">Long press</string>
     <string name="select_folder_or_file">Select folder or file</string>
@@ -136,11 +135,14 @@
     <string name="choose_menu_options">Choose menu options</string>
     <string name="menu">Menu</string>
     <string name="copy">Copy</string>
-    <string name="lbl_move">move</string>
     <!-- AdMob ad unit IDs -->
     <string name="there_is_no_app_to_handle_this_type_of_file">There is no app to handle this type of file</string>
     <string name="storage">Storage</string>
     <string name="empty">Empty</string>
     <string name="my_file">My File</string>
+    <string name="please_click_back_again_to_exist">Please click BACK again to exit</string>
+    <string name="play_audio">Play Audio</string>
+    <string name="search">Search</string>
+    <string name="paste">Paste</string>
 
 </resources>

@@ -6,16 +6,18 @@ import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.StandardExceptionParser;
 import com.google.android.gms.analytics.Tracker;
-import com.luckyba.myfile.ui.activity.MainActivity;
+import com.luckyba.myfile.MainActivity;
 import com.luckyba.myfile.common.CommonListener;
-import com.luckyba.myfile.ui.helper.AnalyticsTrackers;
 import com.luckyba.myfile.data.model.MediaFileListModel;
+import com.luckyba.myfile.data.reponsitory.FileRepository;
+import com.luckyba.myfile.helper.AnalyticsTrackers;
 
 import java.util.ArrayList;
 
 public class MyApplication extends Application {
     private static MyApplication mInstance;
-    private ArrayList<MediaFileListModel>  mediaFileListModelArrayList;
+    private ArrayList<MediaFileListModel> mediaFileListModelArrayList;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -30,7 +32,7 @@ public class MyApplication extends Application {
 
 
     public void setButtonBackPressed(CommonListener.CommunicationActivity listener) {
-        MainActivity.buttonBackPressListener=listener;
+        MainActivity.buttonBackPressListener = listener;
     }
 
     public void setMediaFileListArrayList(ArrayList<MediaFileListModel> mediaFileListArrayList) {
@@ -94,5 +96,9 @@ public class MyApplication extends Application {
 
         // Build and send an Event.
         t.send(new HitBuilders.EventBuilder().setCategory(category).setAction(action).setLabel(label).build());
+    }
+
+    public FileRepository getRepository() {
+        return new FileRepository(this);
     }
 }

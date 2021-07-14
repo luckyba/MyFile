@@ -13,14 +13,12 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
         android:layout_margin="10dp"
         android:gravity="center"
         android:orientation="vertical">
 
-        <com.luckyba.myfile.ui.helper.ArcProgress
+        <com.luckyba.myfile.helper.ArcProgress
             android:id="@+id/progress_storage"
             android:layout_width="80dp"
             android:layout_height="80dp"
