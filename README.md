@@ -6,6 +6,8 @@
 * Show Detail Storage state
 
 ## Need to implement more.
+* Add Threads to load data, 
+* Add Listener to listen data changes
 * Move, Copy folder.
 * Search feature.
 * ...
