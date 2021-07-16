@@ -5,10 +5,6 @@
 
     <color name="my_file_back_ground">#010101</color>
     <color name="action_bar_back_ground">#010101</color>
-    <color name="action_bar_text_color">#fafafa</color>
     <color name="action_bar_title_text_color">#fafafa</color>
-    <color name="action_bar_more_button_color">#fafafa</color>
-    <color name="item_back_ground">#010101</color>
     <color name="text_color">#fcfcfc</color>
-    <color name="draw_back_ground">#2e2e2e</color>
 </resources>
