@@ -1,0 +1,120 @@
+@startuml
+class com.luckyba.myfile.storage.StorageFragment {
+- {static} String ARG_PARAM1
+- {static} String ARG_PARAM2
+- String mParam1
+- String mParam2
+- OnFragmentInteractionListener mListener
+- StorageListAdapter storageListAdapter
+- ListPathAdapter listPathAdapter
+- StorageViewManager storageViewManager
+- StorageViewModel storageViewModel
+- View mRootView
+- DataObserver dataObserve
+- Handler mHandler
++ {static} StorageFragment newInstance(String,String)
++ void onCreate(Bundle)
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void onViewCreated(View,Bundle)
++ void onResume()
++ void onBackPressed(int)
++ void onAttach(Context)
++ void onDetach()
++ void onDestroy()
++ void createNewFile()
++ void createNewFolder()
++ void onClick(View,int)
++ void onLongClick(View,int)
+}
+interface com.luckyba.myfile.storage.StorageFragment.OnFragmentInteractionListener {
+~ void onFragmentInteraction(Uri)
+}
+class com.luckyba.myfile.storage.StorageViewModel {
+- FileRepository repository
++ ArrayList<StorageFilesModel> getAllInternal(String)
++ ArrayList<StorageFilesModel> move(String,HashMap)
++ ArrayList<StorageFilesModel> copy(String,HashMap)
++ boolean delete(String,String,String)
++ boolean extract(String,String,String)
++ StorageFilesModel createFolder(String,String,String)
++ StorageFilesModel createFile(String,String,String)
++ StorageFilesModel reName(String,String,String,String)
+}
+class com.luckyba.myfile.storage.StorageViewHolder {
++ TextView lblFileName
++ ImageView imgItemIcon
++ CheckBox checkBox
+}
+class com.luckyba.myfile.storage.StorageListAdapter {
+- ArrayList<StorageFilesModel> storageFilesModels
+- Context mContext
+- CommonListener.ClickListener mListener
++ void setData(ArrayList<StorageFilesModel>)
++ StorageViewHolder onCreateViewHolder(ViewGroup,int)
++ void onBindViewHolder(StorageViewHolder,int)
++ int getItemCount()
+}
+class com.luckyba.myfile.storage.StorageViewManager {
+- View mRootView
+- String mParam1
+- StorageListAdapter storageListAdapter
+- RecyclerView recyclerView
+- LinearLayout noMediaLayout
+- StorageFragment.OnFragmentInteractionListener mListener
+- RelativeLayout footerAudioPlayer
+- LinearLayout fileCopyLayout
+- MediaPlayer mediaPlayer
+- RelativeLayout footerLayout
+- TextView imgDelete
+- ImageView imgMenu
+- AVLoadingIndicatorView progressBar
+- TextView tvPasteFile
+- View viewBy
+- Activity activity
+- RecyclerView lvPathName
+- ListPathAdapter listPathAdapter
+- ArrayList<String> arrayListFilePaths
+- ArrayList<String> arrayListFileNames
+- ArrayList<StorageFilesModel> storageFilesModelArrayList
+- StorageViewModel storageViewModel
+- String rootPath
+- String fileExtension
+- int selectedFilePosition
+- HashMap selectedFileHashMap
+- boolean isCheckboxVisible
+- boolean isVerticalList
+- int numCol
+- boolean isCopy
+- void init()
+- void initView()
+- void initListener()
+- void getFilesList(String)
++ void onBackPressed(int,Activity)
++ void onItemClick(View,int)
++ void onItemLongClick(View,int)
++ void setDataChange(StorageFilesModel)
++ void openFile(String,String)
++ void deleteFile()
++ void extractZip(String,String)
++ void moveFile(String)
++ void copyFile(String)
++ void renameFile(Dialog,String,String,int)
++ void createNewFile()
++ void createNewFolder()
+- void showMenu()
+- void showFileDetails(String,String)
+- void showAudioPlayer(String,String)
+- void viewBy(boolean)
+- void hideAllCheckBook()
+}
+
+
+com.luckyba.myfile.storage.CommunicationActivity <|.. com.luckyba.myfile.storage.StorageFragment
+com.luckyba.myfile.storage.ClickListener <|.. com.luckyba.myfile.storage.StorageFragment
+androidx.fragment.app.Fragment <|-- com.luckyba.myfile.storage.StorageFragment
+com.luckyba.myfile.storage.StorageFragment +.. com.luckyba.myfile.storage.StorageFragment.OnFragmentInteractionListener
+androidx.lifecycle.ViewModel <|-- com.luckyba.myfile.storage.StorageViewModel
+com.luckyba.myfile.storage.ViewHolder <|-- com.luckyba.myfile.storage.StorageViewHolder
+com.luckyba.myfile.storage.Adapter <|-- com.luckyba.myfile.storage.StorageListAdapter
+com.luckyba.myfile.common.CommonFunctionInterface <|.. com.luckyba.myfile.storage.StorageViewManager
+@enduml

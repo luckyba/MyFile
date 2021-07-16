@@ -1,0 +1,64 @@
+@startuml
+class com.luckyba.myfile.audios.AudiosListAdapter {
+- ArrayList<MediaFileListModel> mediaFileListModels
+- CommonListener.ClickListener mListener
++ void setData(ArrayList<MediaFileListModel>)
++ AudiosListViewHolder onCreateViewHolder(ViewGroup,int)
++ void onBindViewHolder(AudiosListViewHolder,int)
++ int getItemCount()
+}
+class com.luckyba.myfile.audios.AudiosViewManager {
+- View mRootView
+- AudiosViewModel audiosViewModel
+- AudiosListAdapter audiosListAdapter
+- Activity activity
+- RecyclerView recyclerView
+- ArrayList<MediaFileListModel> mediaFileListModels
+- LinearLayout noMediaLayout
+- MediaPlayer mediaPlayer
+- void init()
+- void showAudioPlayer(String,String)
+- void getMusicList()
++ void onItemClick(View,int)
++ void onItemLongClick(View,int)
+}
+class com.luckyba.myfile.audios.AudiosListFragment {
+- {static} String ARG_PARAM1
+- {static} String ARG_PARAM2
+- View mRootView
+- OnFragmentInteractionListener mListener
+- AudiosViewManager audiosViewManager
+- AudiosListAdapter audiosListAdapter
+- AudiosViewModel audiosViewModel
++ {static} AudiosListFragment newInstance(String,String)
++ void onCreate(Bundle)
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void onViewCreated(View,Bundle)
++ void onButtonPressed(Uri)
++ void onAttach(Context)
++ void onDetach()
++ void onDestroy()
++ void onResume()
++ void onClick(View,int)
++ void onLongClick(View,int)
+}
+interface com.luckyba.myfile.audios.AudiosListFragment.OnFragmentInteractionListener {
+~ void onFragmentInteraction(Uri)
+}
+class com.luckyba.myfile.audios.AudiosListViewHolder {
++ TextView lblFileName
++ ImageView imgItemIcon
+}
+class com.luckyba.myfile.audios.AudiosViewModel {
+- FileRepository repository
++ ArrayList<MediaFileListModel> getALLAudios(DictionaryModel)
+}
+
+
+com.luckyba.myfile.audios.Adapter <|-- com.luckyba.myfile.audios.AudiosListAdapter
+com.luckyba.myfile.audios.ClickListener <|.. com.luckyba.myfile.audios.AudiosListFragment
+androidx.fragment.app.Fragment <|-- com.luckyba.myfile.audios.AudiosListFragment
+com.luckyba.myfile.audios.AudiosListFragment +.. com.luckyba.myfile.audios.AudiosListFragment.OnFragmentInteractionListener
+com.luckyba.myfile.audios.ViewHolder <|-- com.luckyba.myfile.audios.AudiosListViewHolder
+androidx.lifecycle.ViewModel <|-- com.luckyba.myfile.audios.AudiosViewModel
+@enduml
