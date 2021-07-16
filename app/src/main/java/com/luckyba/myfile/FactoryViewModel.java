@@ -9,9 +9,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.audios.AudiosViewModel;
 import com.luckyba.myfile.data.reponsitory.FileRepository;
-import com.luckyba.myfile.externalstorage.ExternalStorageViewModel;
 import com.luckyba.myfile.images.ImagesListViewModel;
-import com.luckyba.myfile.internalstorage.InternalStorageViewModel;
+import com.luckyba.myfile.storage.StorageViewModel;
 import com.luckyba.myfile.videos.VideosViewModel;
 
 public class FactoryViewModel implements ViewModelProvider.Factory {
@@ -39,16 +38,14 @@ public class FactoryViewModel implements ViewModelProvider.Factory {
     @NonNull
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-        if (modelClass.isAssignableFrom(InternalStorageViewModel.class)) {
-            return (T) new InternalStorageViewModel(application, fileRepository);
+        if (modelClass.isAssignableFrom(StorageViewModel.class)) {
+            return (T) new StorageViewModel(application, fileRepository);
         } else if (modelClass.isAssignableFrom(ImagesListViewModel.class)) {
             return (T) new ImagesListViewModel(application, fileRepository);
         } else if (modelClass.isAssignableFrom(VideosViewModel.class)) {
             return (T) new VideosViewModel(application, fileRepository);
         } else if (modelClass.isAssignableFrom(AudiosViewModel.class)) {
             return (T) new AudiosViewModel(application, fileRepository);
-        } else if (modelClass.isAssignableFrom(ExternalStorageViewModel.class)) {
-            return (T) new ExternalStorageViewModel(application, fileRepository);
         }
         throw new IllegalArgumentException("Unable to construct ViewModel");
     }

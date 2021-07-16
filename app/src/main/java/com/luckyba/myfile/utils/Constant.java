@@ -24,6 +24,9 @@ public class Constant {
     public static final int EXTRACT_TYPE = 8;
     public static final int UNKNOW_TYPE = 9;
 
+    public static final String INTERNAL_STORAGE = "internal_storage";
+    public static final String EXTERNAL_STORAGE = "external_storage";
+
     public static final List listAudioType = Collections.unmodifiableList(
             Arrays.asList("mp3", "wav", "ogg"));
 

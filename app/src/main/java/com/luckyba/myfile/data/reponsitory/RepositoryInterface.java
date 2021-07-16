@@ -1,9 +1,8 @@
 package com.luckyba.myfile.data.reponsitory;
 
 import com.luckyba.myfile.data.model.DictionaryModel;
-import com.luckyba.myfile.data.model.ExternalStorageFilesModel;
-import com.luckyba.myfile.data.model.InternalStorageFilesModel;
 import com.luckyba.myfile.data.model.MediaFileListModel;
+import com.luckyba.myfile.data.model.StorageFilesModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,11 +14,19 @@ public interface RepositoryInterface {
 
 //    ArrayList<ImageFolder> getAllFolderPicture (DictionaryProvider dir);
 
-    ArrayList<ExternalStorageFilesModel> getAllExternalFile (String filePath);
+    ArrayList<StorageFilesModel> getAllFile (String filePath);
 
-    ArrayList<InternalStorageFilesModel> getAllInternalFile (String filePath);
+    ArrayList<StorageFilesModel> move (String outputPath, HashMap selectedFileHashMap);
 
-    ArrayList<InternalStorageFilesModel> move (String outputPath, HashMap selectedFileHashMap);
+    ArrayList<StorageFilesModel> copy (String outputPath, HashMap selectedFileHashMap);
 
-    ArrayList<InternalStorageFilesModel> copy (String outputPath, HashMap selectedFileHashMap);
+    boolean delete (String root, String fileName, String pathName);
+
+    StorageFilesModel createFolder (String root, String folderName, String defaultNameFolder);
+
+    StorageFilesModel createFile (String root, String fileName, String defaultName);
+
+    StorageFilesModel reName (String root, String oldName, String newName, String pathName);
+
+    boolean extract (String root, String fileName, String pathName);
 }

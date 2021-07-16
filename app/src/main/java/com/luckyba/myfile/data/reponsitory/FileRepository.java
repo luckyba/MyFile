@@ -2,21 +2,12 @@ package com.luckyba.myfile.data.reponsitory;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.ThumbnailUtils;
-import android.provider.MediaStore;
 import android.util.Log;
-import android.util.Size;
-import android.view.View;
-import android.widget.Toast;
 
-import com.luckyba.myfile.R;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.data.model.DictionaryModel;
-import com.luckyba.myfile.data.model.ExternalStorageFilesModel;
-import com.luckyba.myfile.data.model.InternalStorageFilesModel;
 import com.luckyba.myfile.data.model.MediaFileListModel;
+import com.luckyba.myfile.data.model.StorageFilesModel;
 import com.luckyba.myfile.utils.Constant;
 
 import java.io.File;
@@ -29,9 +20,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class FileRepository implements RepositoryInterface {
 
@@ -83,39 +75,8 @@ public class FileRepository implements RepositoryInterface {
     }
 
     @Override
-    public ArrayList<ExternalStorageFilesModel> getAllExternalFile(String filePath) {
-        ArrayList<ExternalStorageFilesModel> externalStorageFilesModelArrayList = new ArrayList<>();
-
-        try {
-            File f = new File(filePath);
-            File[] files = f.listFiles();
-
-            if (files.length != 0) {
-                for (File file : files) {
-                    ExternalStorageFilesModel model = new ExternalStorageFilesModel();
-                    model.setFileName(file.getName());
-                    model.setFilePath(file.getPath());
-                    model.setCheckboxVisible(false);
-                    model.setSelected(false);
-                    if (file.isDirectory()) {
-                        model.setDir(true);
-                    } else {
-                        model.setDir(false);
-                    }
-
-                    externalStorageFilesModelArrayList.add(model);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return externalStorageFilesModelArrayList;
-    }
-
-    @Override
-    public ArrayList<InternalStorageFilesModel> getAllInternalFile(String filePath) {
-        ArrayList<InternalStorageFilesModel> internalStorageFilesModelList = new ArrayList<>();
+    public ArrayList<StorageFilesModel> getAllFile(String filePath) {
+        ArrayList<StorageFilesModel> storageFilesModelList = new ArrayList<>();
 
         try {
             File f = new File(filePath);
@@ -123,26 +84,26 @@ public class FileRepository implements RepositoryInterface {
 
             if (files != null && files.length != 0) {
                 for (File file : files) {
-                    InternalStorageFilesModel model = new InternalStorageFilesModel
+                    StorageFilesModel model = new StorageFilesModel
                             .Builder(file.getName(), file.getPath())
                             .setDir(file.isDirectory() ? true : false)
                             .setCheckBoxVisible(false)
                             .setSelected(false)
                             .setType(checkType(file))
                             .build();
-                    internalStorageFilesModelList.add(model);
+                    storageFilesModelList.add(model);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return internalStorageFilesModelList;
+        return storageFilesModelList;
     }
 
     @Override
-    public ArrayList<InternalStorageFilesModel> move(String outputPath, HashMap selectedFileHashMap) {
-        ArrayList<InternalStorageFilesModel> internalStorageFilesModels = new ArrayList<>();
+    public ArrayList<StorageFilesModel> move(String outputPath, HashMap selectedFileHashMap) {
+        ArrayList<StorageFilesModel> storageFilesModels = null;
 
         try {
             Set set = selectedFileHashMap.keySet();
@@ -178,7 +139,7 @@ public class FileRepository implements RepositoryInterface {
                     Log.e("tag", e.getMessage());
                 }
 
-                InternalStorageFilesModel model = new InternalStorageFilesModel
+                StorageFilesModel model = new StorageFilesModel
                         .Builder(outputPath + "/" + file.getName(), file.getName())
                         .setSelected(false)
                         .setCheckBoxVisible(false)
@@ -186,20 +147,19 @@ public class FileRepository implements RepositoryInterface {
                         .setType(checkType(file))
                         .build();
 
-                internalStorageFilesModels.add(model);
+                storageFilesModels.add(model);
             }
         } catch (Exception e) {
             MyApplication.getInstance().trackException(e);
             e.printStackTrace();
-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), "unable to process this action", Toast.LENGTH_SHORT).show();
         }
 
-        return internalStorageFilesModels;
+        return storageFilesModels;
     }
 
     @Override
-    public ArrayList<InternalStorageFilesModel> copy(String outputPath, HashMap selectedFileHashMap) {
-        ArrayList<InternalStorageFilesModel> internalStorageFilesModels = new ArrayList<>();
+    public ArrayList<StorageFilesModel> copy(String outputPath, HashMap selectedFileHashMap) {
+        ArrayList<StorageFilesModel> storageFilesModels = null;
         try {
             Set set = selectedFileHashMap.keySet();
             Iterator itr = set.iterator();
@@ -216,22 +176,141 @@ public class FileRepository implements RepositoryInterface {
                 }
                 in.close();
                 out.close();
-                InternalStorageFilesModel model = new InternalStorageFilesModel
+                StorageFilesModel model = new StorageFilesModel
                         .Builder(file.getName(), outputPath + "/" + file.getName())
                         .setCheckBoxVisible(false)
                         .setSelected(false)
                         .setDir(new File(outputPath + "/" + file.getName()).isDirectory())
                         .setType(checkType(file))
                         .build();
-                internalStorageFilesModels.add(model);
+                storageFilesModels.add(model);
             }
         } catch (Exception e) {
             MyApplication.getInstance().trackException(e);
             e.printStackTrace();
-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), "unable to process this action" + e, Toast.LENGTH_SHORT).show();
         }
 
-        return null;
+        return storageFilesModels;
+    }
+
+    @Override
+    public boolean delete(String root, String fileName, String pathName) {
+        return false;
+    }
+
+    @Override
+    public StorageFilesModel createFolder(String rootPath, String folderName, String defaultNameFolder) {
+        StorageFilesModel model = null;
+        if (folderName.length() == 0) {//if user not enter text file name
+            folderName = defaultNameFolder;
+        }
+        try {
+            File file = new File(rootPath + "/" + folderName);
+            if (!file.exists()) {
+                boolean isFolderCreated = file.mkdir();
+                if (isFolderCreated) {
+                    model = new StorageFilesModel
+                            .Builder(folderName, rootPath + "/" + folderName)
+                            .setSelected(false)
+                            .setCheckBoxVisible(false)
+                            .setDir(true)
+                            .setType(Constant.FOLDER_TYPE)
+                            .build();
+
+                }
+            }
+        } catch (Exception e) {
+            MyApplication.getInstance().trackException(e);
+            e.printStackTrace();
+        }
+        return model;
+    }
+
+    @Override
+    public StorageFilesModel createFile(String rootPath, String fileName, String defaultName) {
+        StorageFilesModel model = null;
+        if (fileName.length() == 0) {//if file name is empty
+            fileName = "NewFile";
+        }
+        try {
+            File file = new File(rootPath + "/" + fileName + ".txt");
+            if (!file.exists()) {
+                boolean isCreated = file.createNewFile();
+                if (isCreated) {
+                    model = new StorageFilesModel
+                            .Builder(fileName + ".txt", file.getPath())
+                            .setDir(false)
+                            .setSelected(false)
+                            .setCheckBoxVisible(false)
+                            .setType(Constant.DOCUMENT_TYPE)
+                            .build();
+                }
+            }
+        } catch (Exception e) {
+            MyApplication.getInstance().trackException(e);
+            e.printStackTrace();
+        }
+        return model;
+    }
+
+    @Override
+    public StorageFilesModel reName(String root, String oldName, String newName, String filePath) {
+        StorageFilesModel model = null;
+
+        try {
+            File renamedFile = new File(filePath.substring(0, filePath.lastIndexOf('/') + 1) + newName);
+
+            final File oldFile = new File(filePath);//create file with old name
+            boolean isRenamed = oldFile.renameTo(renamedFile);
+            if (isRenamed) {
+                model = new StorageFilesModel
+                        .Builder(newName, renamedFile.getPath())
+                        .setSelected(false)
+                        .setDir(renamedFile.isDirectory())
+                        .setCheckBoxVisible(false)
+                        .build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return model;
+    }
+
+    @Override
+    public boolean extract(String rootPath, String fileName, String pathName) {
+
+        byte[] buffer = new byte[1024];
+        try {
+            File folder = new File(rootPath);//create output directory is not exists
+            if (!folder.exists()) {
+                folder.mkdir();
+            }
+            ZipInputStream zis =
+                    new ZipInputStream(new FileInputStream(pathName));//get the zip file content
+            ZipEntry ze = zis.getNextEntry(); //get the zipped file list entry
+            while (ze != null) {
+                String unzipFileName = ze.getName();
+                File newFile = new File(rootPath + File.separator + unzipFileName);
+                //create all non exists folders
+                //else you will hit FileNotFoundException for compressed folder
+                new File(newFile.getParent()).mkdirs();
+                FileOutputStream fos = new FileOutputStream(newFile);
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+                fos.close();
+                ze = zis.getNextEntry();
+            }
+            zis.closeEntry();
+            zis.close();
+            return true;
+        } catch (IOException ex) {
+            MyApplication.getInstance().trackException(ex);
+            ex.printStackTrace();
+            return false;
+        }
     }
 
     private int checkType(File file) {

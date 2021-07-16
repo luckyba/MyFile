@@ -30,7 +30,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_margin="15dp"
             android:background="@drawable/bg_btn_confirm"
-            android:hint="@string/hint_lbl_new_folder"
+            android:hint="@string/new_folder"
             android:padding="10dp"
             android:maxLines="1">
 

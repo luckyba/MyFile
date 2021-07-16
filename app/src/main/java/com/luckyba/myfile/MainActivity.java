@@ -1,7 +1,6 @@
 package com.luckyba.myfile;
 
 import android.app.Dialog;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,15 +21,15 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.navigation.NavigationView;
-import com.luckyba.myfile.utils.Utils;
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.audios.AudiosListFragment;
 import com.luckyba.myfile.common.CommonListener;
-import com.luckyba.myfile.externalstorage.ExternalStorageFragment;
 import com.luckyba.myfile.helper.ArcProgress;
 import com.luckyba.myfile.images.ImagesListFragment;
-import com.luckyba.myfile.internalstorage.InternalStorageFragment;
 import com.luckyba.myfile.settings.SettingsFragment;
+import com.luckyba.myfile.storage.StorageFragment;
+import com.luckyba.myfile.utils.Constant;
+import com.luckyba.myfile.utils.Utils;
 import com.luckyba.myfile.videos.VideosListFragment;
 
 
@@ -166,9 +165,9 @@ public class MainActivity extends AppCompatActivity
     private Fragment getHomeFragment() {
         switch (navItemIndex) {
             case 3:
-                return new InternalStorageFragment();
+                return StorageFragment.newInstance(Constant.INTERNAL_STORAGE, "internal");
             case 4:
-                return new ExternalStorageFragment();
+                return StorageFragment.newInstance(Constant.EXTERNAL_STORAGE, "external");
             case 0:
                 return new ImagesListFragment();
             case 1:
@@ -178,7 +177,7 @@ public class MainActivity extends AppCompatActivity
             case 5:
                 return new SettingsFragment();
             default:
-                return new InternalStorageFragment();
+                return StorageFragment.newInstance(Constant.INTERNAL_STORAGE, "internal");
         }
     }
 
@@ -210,30 +209,19 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_new_folder) {
-            InternalStorageFragment internalStorageFragment = (InternalStorageFragment) getSupportFragmentManager().findFragmentByTag(FG_TAG);
-            if (internalStorageFragment != null) {
-                internalStorageFragment.createNewFolder();
+            StorageFragment storageFragment = (StorageFragment) getSupportFragmentManager().findFragmentByTag(FG_TAG);
+            if (storageFragment != null) {
+                storageFragment.createNewFolder();
             }
             return true;
         } else if (id == R.id.action_new_file) {
-            InternalStorageFragment internalStorageFragment = (InternalStorageFragment) getSupportFragmentManager().findFragmentByTag(FG_TAG);
-            if (internalStorageFragment != null) {
-                internalStorageFragment.createNewFile();
-            }
-            return true;
-        } else if (id == R.id.action_new_folder_external) {
-            ExternalStorageFragment externalStorageFragment = (ExternalStorageFragment) getSupportFragmentManager().findFragmentByTag(FG_TAG);
-            if (externalStorageFragment != null) {
-                externalStorageFragment.createNewFolder();
-            }
-            return true;
-        } else if (id == R.id.action_new_file_external) {
-            ExternalStorageFragment externalStorageFragment = (ExternalStorageFragment) getSupportFragmentManager().findFragmentByTag(FG_TAG);
-            if (externalStorageFragment != null) {
-                externalStorageFragment.createNewFile();
+            StorageFragment storageFragment = (StorageFragment) getSupportFragmentManager().findFragmentByTag(FG_TAG);
+            if (storageFragment != null) {
+                storageFragment.createNewFile();
             }
             return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
 

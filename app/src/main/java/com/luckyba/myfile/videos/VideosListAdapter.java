@@ -1,8 +1,5 @@
 package com.luckyba.myfile.videos;
 
-import android.graphics.Bitmap;
-import android.media.ThumbnailUtils;
-import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +14,6 @@ import com.luckyba.myfile.common.CommonListener;
 import com.luckyba.myfile.data.model.MediaFileListModel;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
