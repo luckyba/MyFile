@@ -1,0 +1,65 @@
+@startuml
+class com.luckyba.myfile.images.ImagesListViewHolder {
++ TextView lblFileName
++ ImageView imgItemIcon
+}
+class com.luckyba.myfile.images.ImagesListFragment {
+- {static} String ARG_PARAM1
+- {static} String ARG_PARAM2
+- String mParam1
+- String mParam2
+- View mRootView
+- ImagesListViewModel imagesListViewModel
+- ImagesListAdapter imagesListAdapter
+- ImagesListManager imagesListManager
+- OnFragmentInteractionListener mListener
++ {static} ImagesListFragment newInstance(String,String)
++ void onCreate(Bundle)
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void onViewCreated(View,Bundle)
++ void onButtonPressed(Uri)
++ void onAttach(Context)
++ void onDetach()
++ void onDestroy()
++ void onClick(View,int)
++ void onLongClick(View,int)
+}
+interface com.luckyba.myfile.images.ImagesListFragment.OnFragmentInteractionListener {
+~ void onFragmentInteraction(Uri)
+}
+class com.luckyba.myfile.images.ImagesListManager {
+- ArrayList<MediaFileListModel> imageListModelsArray
+- ImagesListAdapter imagesListAdapter
+- LinearLayout noMediaLayout
+- RecyclerView recyclerView
+- View mRootView
+- ImagesListViewModel imagesListViewModel
+- Activity activity
+- void init()
+- void getImagesList()
++ void onItemClick(View,int)
++ void onItemLongClick(View,int)
+}
+class com.luckyba.myfile.images.ImagesListAdapter {
+- ArrayList<MediaFileListModel> mediaFileListModels
+- CommonListener.ClickListener mListener
+~ int THUMB_SIZE
+- Context mContext
++ void setData(ArrayList<MediaFileListModel>)
++ ImagesListViewHolder onCreateViewHolder(ViewGroup,int)
++ void onBindViewHolder(ImagesListViewHolder,int)
++ int getItemCount()
+}
+class com.luckyba.myfile.images.ImagesListViewModel {
+- FileRepository repository
++ ArrayList<MediaFileListModel> getAllInternal(DictionaryModel)
+}
+
+
+com.luckyba.myfile.images.ViewHolder <|-- com.luckyba.myfile.images.ImagesListViewHolder
+com.luckyba.myfile.images.ClickListener <|.. com.luckyba.myfile.images.ImagesListFragment
+androidx.fragment.app.Fragment <|-- com.luckyba.myfile.images.ImagesListFragment
+com.luckyba.myfile.images.ImagesListFragment +.. com.luckyba.myfile.images.ImagesListFragment.OnFragmentInteractionListener
+com.luckyba.myfile.images.Adapter <|-- com.luckyba.myfile.images.ImagesListAdapter
+androidx.lifecycle.ViewModel <|-- com.luckyba.myfile.images.ImagesListViewModel
+@enduml

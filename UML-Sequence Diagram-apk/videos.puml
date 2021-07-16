@@ -1,0 +1,64 @@
+@startuml
+class com.luckyba.myfile.videos.VideosListAdapter {
+- List<MediaFileListModel> mediaFileListModels
+- CommonListener.ClickListener mListener
++ void setData(ArrayList<MediaFileListModel>)
++ VideoListViewHolder onCreateViewHolder(ViewGroup,int)
++ void onBindViewHolder(VideoListViewHolder,int)
++ int getItemCount()
+}
+class com.luckyba.myfile.videos.VideosListFragment {
+- {static} String ARG_PARAM1
+- {static} String ARG_PARAM2
+- String mParam1
+- String mParam2
+- View mRootView
+- VideosViewModel videosViewModel
+- VideosListAdapter videosListAdapter
+- VideosViewManager videosViewManager
+- OnFragmentInteractionListener mListener
++ {static} VideosListFragment newInstance(String,String)
++ void onCreate(Bundle)
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void onViewCreated(View,Bundle)
++ void onButtonPressed(Uri)
++ void onAttach(Context)
++ void onDetach()
++ void onDestroy()
++ void onClick(View,int)
++ void onLongClick(View,int)
+}
+interface com.luckyba.myfile.videos.VideosListFragment.OnFragmentInteractionListener {
+~ void onFragmentInteraction(Uri)
+}
+class com.luckyba.myfile.videos.VideosViewModel {
+- Application application
+- FileRepository repository
++ ArrayList<MediaFileListModel> getAllVideos(DictionaryModel)
+}
+class com.luckyba.myfile.videos.VideosViewManager {
+- View mRootView
+- VideosViewModel videosViewModel
+- VideosListAdapter videosListAdapter
+- Activity activity
+- RecyclerView recyclerView
+- ArrayList<MediaFileListModel> mediaFileListModelArrayList
+- LinearLayout noMediaLayout
+- void init()
+- void getVideosList()
++ void onItemClick(View,int)
++ void onItemLongClick(View,int)
+}
+class com.luckyba.myfile.videos.VideoListViewHolder {
++ TextView tvFileName
++ ImageView imgItemIcon
+}
+
+
+com.luckyba.myfile.videos.Adapter <|-- com.luckyba.myfile.videos.VideosListAdapter
+com.luckyba.myfile.videos.ClickListener <|.. com.luckyba.myfile.videos.VideosListFragment
+androidx.fragment.app.Fragment <|-- com.luckyba.myfile.videos.VideosListFragment
+com.luckyba.myfile.videos.VideosListFragment +.. com.luckyba.myfile.videos.VideosListFragment.OnFragmentInteractionListener
+androidx.lifecycle.ViewModel <|-- com.luckyba.myfile.videos.VideosViewModel
+com.luckyba.myfile.videos.ViewHolder <|-- com.luckyba.myfile.videos.VideoListViewHolder
+@enduml
