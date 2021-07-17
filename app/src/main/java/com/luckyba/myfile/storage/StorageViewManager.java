@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Environment;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.Animation;
@@ -23,6 +24,7 @@ import android.widget.ToggleButton;
 
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -42,6 +44,7 @@ import com.luckyba.myfile.utils.Constant;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -52,6 +55,7 @@ public class StorageViewManager implements CommonFunctionInterface {
     private View mRootView;
     private String mParam1;
     private StorageListAdapter storageListAdapter;
+    private LifecycleOwner lifecycleOwner;
     private RecyclerView recyclerView;
     private LinearLayout noMediaLayout, noMemoryCard;
 
@@ -81,16 +85,15 @@ public class StorageViewManager implements CommonFunctionInterface {
     private boolean isVerticalList = true;
     private int numCol = 1;
 
-    private boolean isCopy = false;
-
-
     public StorageViewManager(View root, StorageViewModel viewModel
-            , StorageListAdapter adapter, ListPathAdapter listPathAdapter, Activity activity, String[] agr) {
+            , StorageListAdapter adapter, ListPathAdapter listPathAdapter, Activity activity, String[] agr
+            , LifecycleOwner lifecycleOwner) {
         mRootView = root;
         storageListAdapter = adapter;
         storageViewModel = viewModel;
         this.listPathAdapter = listPathAdapter;
         this.activity = activity;
+        this.lifecycleOwner = lifecycleOwner;
         mParam1 = agr[0];
         init();
     }
@@ -100,21 +103,21 @@ public class StorageViewManager implements CommonFunctionInterface {
         arrayListFilePaths = new ArrayList<>();
         arrayListFileNames = new ArrayList<>();
         storageListAdapter.setData(storageFilesModelArrayList);
-
+        storageListAdapter.notifyDataSetChanged();
         initView();
         initListener();
         if (mParam1.equals(Constant.INTERNAL_STORAGE)) {
             rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
             arrayListFilePaths.add(rootPath);
             arrayListFileNames.add(activity.getString(R.string.internal_storage));
-            getFilesList(rootPath);
+            storageViewModel.getAllInternal(rootPath);
         } else {
             if (StorageHelper.isExternalStorageReadable()) {
                 rootPath = System.getenv("SECONDARY_STORAGE");
                 if (rootPath != null) {
                     arrayListFilePaths.add(rootPath);
                     arrayListFileNames.add(activity.getString(R.string.external_storage));
-                    getFilesList(rootPath);
+                    storageViewModel.getAllInternal(rootPath);
                 } else {
                     recyclerView.setVisibility(View.GONE);
                     noMediaLayout.setVisibility(View.GONE);
@@ -163,17 +166,27 @@ public class StorageViewManager implements CommonFunctionInterface {
     }
 
     private void initListener() {
-        imgDelete.setOnClickListener(view -> deleteFile());
+        imgDelete.setOnClickListener(view -> {
+            footerLayout.setVisibility(View.GONE);
+            deleteFile();
+        });
 
         imgMenu.setOnClickListener(view -> showMenu());
 
         tvMoveCancel.setOnClickListener(view -> {
             selectedFileHashMap.clear();
             isCheckboxVisible = false;
+            footerLayout.setVisibility(View.GONE);
             fileMoveLayout.setVisibility(View.GONE);
         });
 
-        tvMoveFile.setOnClickListener(view -> moveFile(arrayListFilePaths.get(arrayListFilePaths.size()-1)));
+        tvMoveFile.setOnClickListener(view ->
+        {
+            progressBar.setVisibility(View.VISIBLE);
+            footerLayout.setVisibility(View.GONE);
+            fileMoveLayout.setVisibility(View.GONE);
+            storageViewModel.move(arrayListFilePaths.get(arrayListFilePaths.size() - 1), selectedFileHashMap);
+        });
 
         tvCopyCancel.setOnClickListener(view -> {
             selectedFileHashMap.clear();
@@ -181,27 +194,32 @@ public class StorageViewManager implements CommonFunctionInterface {
             fileCopyLayout.setVisibility(View.GONE);
         });
 
-        tvPasteFile.setOnClickListener(view -> copyFile(arrayListFilePaths.get(arrayListFilePaths.size()-1)));
+        tvPasteFile.setOnClickListener(view -> {
+            progressBar.setVisibility(View.VISIBLE);
+            fileCopyLayout.setVisibility(View.GONE);
+            storageViewModel.copy(arrayListFilePaths.get(arrayListFilePaths.size() - 1), selectedFileHashMap);
+        });
 
         imgFileCopy.setOnClickListener(view -> {
             footerLayout.setVisibility(View.GONE);
             fileCopyLayout.setVisibility(View.VISIBLE);
-            for (int i = 0; i < storageFilesModelArrayList.size(); i++) {
-                StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(i);
-                storageFilesModel.setCheckboxVisible(false);
-            }
-            storageListAdapter.notifyDataSetChanged();
-            isCheckboxVisible = false;
+            resetCheckBox();
         });
 
         viewBy.setOnClickListener(v -> viewBy(true));
+
+        storageViewModel.getLoadAllData().observe(lifecycleOwner, this::updateFilesList);
+        storageViewModel.getExtractLiveData().observe(lifecycleOwner, this::updateAfterExtract);
+        storageViewModel.getMoveLiveData().observe(lifecycleOwner, this::updateAfterMove);
+        storageViewModel.getCopyLiveData().observe(lifecycleOwner, this::updateAfterCopyFile);
+        storageViewModel.getReNameLiveData().observe(lifecycleOwner, this::updateAfterRename);
+        storageViewModel.getCreateFileLiveData().observe(lifecycleOwner, this::updateAfterCreateNewFile);
+        storageViewModel.getCreateFolderLiveData().observe(lifecycleOwner, this::updateAfterCreateNewFolder);
+        storageViewModel.getDeleteNameLiveData().observe(lifecycleOwner, this::updateAfterDelete);
     }
 
-    private void getFilesList(String filePath) {
-        rootPath = filePath;
-
-        storageFilesModelArrayList = storageViewModel.getAllInternal(filePath);
-        if (storageFilesModelArrayList.isEmpty()) {
+    private void updateFilesList(ArrayList<StorageFilesModel> data) {
+        if (data.isEmpty()) {
             noMediaLayout.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
@@ -210,9 +228,104 @@ public class StorageViewManager implements CommonFunctionInterface {
         }
         listPathAdapter.setData(arrayListFileNames);
         listPathAdapter.notifyDataSetChanged();
-
+        storageFilesModelArrayList = data;
         storageListAdapter.setData(storageFilesModelArrayList);
         storageListAdapter.notifyDataSetChanged();
+    }
+
+    private void updateAfterExtract(Boolean result) {
+        if (result) {
+            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.successfully_extracted), Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.fail_extracted), Toast.LENGTH_SHORT).show();
+        }
+        progressBar.setVisibility(View.GONE);
+    }
+
+    private void updateAfterMove (ArrayList<StorageFilesModel> storageFilesModels) {
+        if (noMediaLayout.getVisibility() == View.VISIBLE) {
+            noMediaLayout.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
+        if (!storageFilesModels.isEmpty()) {
+            storageFilesModelArrayList.addAll(storageFilesModels);
+            selectedFileHashMap.clear();
+        } else {
+            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
+        }
+        hideAllCheckBook();
+        progressBar.setVisibility(View.GONE);
+    }
+
+    private void updateAfterCopyFile (ArrayList<StorageFilesModel> storageFilesModels) {
+        //if storageFilesModels large thread to handle it
+        if (noMediaLayout.getVisibility() == View.VISIBLE) {
+            noMediaLayout.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
+
+        if (!storageFilesModels.isEmpty()) {
+            storageFilesModelArrayList.addAll(storageFilesModels);
+            selectedFileHashMap.clear();
+        } else {
+            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
+        }
+        hideAllCheckBook();
+        fileCopyLayout.setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
+    }
+
+    private void updateAfterRename (StorageFilesModel storageFilesModel) {
+        if (storageFilesModel != null) {
+            storageFilesModel.setType(storageFilesModelArrayList.get(selectedFilePosition).getType());
+            storageFilesModelArrayList.get(selectedFilePosition);
+            storageFilesModelArrayList.remove(selectedFilePosition);
+            storageFilesModelArrayList.add(selectedFilePosition, storageFilesModel);
+            storageListAdapter.notifyDataSetChanged();
+        } else{
+            Toast.makeText(MyApplication.getInstance().getApplicationContext(), MyApplication.getInstance().getApplicationContext().getString(R.string.msg_prompt_not_renamed_you_dont_have_permission_to_rename), Toast.LENGTH_SHORT).show();
+        }
+
+        hideAllCheckBook();
+    }
+
+    private void updateAfterCreateNewFile (StorageFilesModel storageFilesModel) {
+        if (storageFilesModel != null) {
+            if (noMediaLayout.getVisibility() == View.VISIBLE) {
+                noMediaLayout.setVisibility(View.GONE);
+                recyclerView.setVisibility(View.VISIBLE);
+            }
+            storageFilesModelArrayList.add(storageFilesModel);
+            storageListAdapter.setData(storageFilesModelArrayList);
+            storageListAdapter.notifyDataSetChanged();
+            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_created), Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_not_created_you_dont_have_permission_to_create_or_already_existed), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void updateAfterCreateNewFolder (StorageFilesModel storageFilesModel) {
+        if (storageFilesModel != null) {
+            if (noMediaLayout.getVisibility() == View.VISIBLE) {
+                noMediaLayout.setVisibility(View.GONE);
+                recyclerView.setVisibility(View.VISIBLE);
+            }
+            storageFilesModelArrayList.add(storageFilesModel);
+            storageListAdapter.setData(storageFilesModelArrayList);
+            storageListAdapter.notifyDataSetChanged();
+            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_created), Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_not_created_you_dont_have_permission_to_create), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void updateAfterDelete (List<Integer> listDeleted) {
+        selectedFileHashMap.clear();
+        listDeleted.sort(Comparator.reverseOrder());
+        for (Integer pos: listDeleted) {
+            storageFilesModelArrayList.remove((int)pos);
+        }
+        hideAllCheckBook();
     }
 
     public void onBackPressed (int navItemIndex, Activity activity) {
@@ -238,7 +351,10 @@ public class StorageViewManager implements CommonFunctionInterface {
                         if (arrayListFilePaths.size() != 0) {
                             if (arrayListFilePaths.size() >= 2) {
                                 storageFilesModelArrayList.clear();
-                                getFilesList(arrayListFilePaths.get(arrayListFilePaths.size() - 2));
+//                                getFilesList(arrayListFilePaths.get(arrayListFilePaths.size() - 2));
+                                rootPath = arrayListFilePaths.get(arrayListFilePaths.size() - 2);
+                                storageViewModel.getAllInternal(rootPath);
+
                                 storageListAdapter.notifyDataSetChanged();
                             }
                             arrayListFilePaths.remove(arrayListFilePaths.size() - 1);
@@ -333,11 +449,6 @@ public class StorageViewManager implements CommonFunctionInterface {
         }
     }
 
-    public void setDataChange(StorageFilesModel data) {
-        storageFilesModelArrayList.add(data);
-        storageListAdapter.notifyDataSetChanged();
-    }
-
     @Override
     public void openFile(String fileName, String filePath) {
         File file = new File(filePath);
@@ -345,7 +456,9 @@ public class StorageViewManager implements CommonFunctionInterface {
             if (file.canRead()) {//if directory is readable
                 storageFilesModelArrayList.clear();
                 arrayListFilePaths.add(filePath);
-                getFilesList(filePath);
+
+                rootPath = filePath;
+                storageViewModel.getAllInternal(filePath);
 
                 viewBy(false);
                 storageListAdapter.notifyDataSetChanged();
@@ -415,27 +528,8 @@ public class StorageViewManager implements CommonFunctionInterface {
             lblDeleteFile.setText(MyApplication.getInstance().getApplicationContext().getResources().getString(R.string.lbl_delete_multiple_files));
         }
         btnOkay.setOnClickListener(view -> {
-            try {
-                Set set = selectedFileHashMap.keySet();
-                Iterator itr = set.iterator();
-                while (itr.hasNext()) {
-                    int i = Integer.parseInt(itr.next().toString());
-                    File deleteFile = new File((String) selectedFileHashMap.get(i));//create file for selected file
-                    boolean isDeleteFile = deleteFile.delete();//delete the file from memory
-                    if (isDeleteFile) {
-                        selectedFileHashMap.remove(i);
-                        StorageFilesModel model = storageFilesModelArrayList.get(i);
-                        storageFilesModelArrayList.remove(model);//remove file from listview
-                        storageListAdapter.notifyDataSetChanged();//refresh the adapter
-                        selectedFileHashMap.remove(selectedFilePosition);
-                    }
-                }
-                dialogDeleteFile.dismiss();
-                footerLayout.setVisibility(View.GONE);
-            } catch (Exception e) {
-                MyApplication.getInstance().trackException(e);
-                e.printStackTrace();
-            }
+            dialogDeleteFile.dismiss();
+            storageViewModel.delete(selectedFileHashMap);
         });
         btnCancel.setOnClickListener(view -> dialogDeleteFile.dismiss());
     }
@@ -456,14 +550,7 @@ public class StorageViewManager implements CommonFunctionInterface {
             extractZipDialog.dismiss();
             progressBar.setVisibility(View.VISIBLE);
             // need to handle thread here.
-            if (storageViewModel.extract(rootPath, fileName, filePath)) {
-                Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.successfully_extracted), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.fail_extracted), Toast.LENGTH_SHORT).show();
-            }
-            progressBar.setVisibility(View.GONE);
-            extractZipDialog.dismiss();
-
+            storageViewModel.extract(rootPath, fileName, filePath);
         });
 
         extractZipDialog.show();
@@ -474,17 +561,6 @@ public class StorageViewManager implements CommonFunctionInterface {
     public void moveFile(String outputPath) {
         progressBar.setVisibility(View.VISIBLE);
         // need to handle thread here
-        ArrayList<StorageFilesModel> storageFilesModels = storageViewModel.move(outputPath, selectedFileHashMap);
-        if (storageFilesModels != null) {
-            storageFilesModelArrayList.addAll(storageFilesModels);
-            storageListAdapter.notifyDataSetChanged();//refresh the adapter
-            selectedFileHashMap.clear();
-        } else {
-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
-        }
-        footerLayout.setVisibility(View.GONE);
-        fileMoveLayout.setVisibility(View.GONE);
-        progressBar.setVisibility(View.GONE);
     }
 
     // only copy file
@@ -492,24 +568,10 @@ public class StorageViewManager implements CommonFunctionInterface {
     public void copyFile(String outputPath) {
         progressBar.setVisibility(View.VISIBLE);
         // need to handle thread here
-        ArrayList<StorageFilesModel> storageFilesModels = storageViewModel.copy(outputPath, selectedFileHashMap);
-        if (storageFilesModels != null) {
-            storageFilesModelArrayList.addAll(storageFilesModels);
-            storageListAdapter.setData(storageFilesModelArrayList);
-            storageListAdapter.notifyDataSetChanged();//refresh the adapter
-            selectedFileHashMap.clear();
-        } else {
-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
-        }
-
-        footerLayout.setVisibility(View.GONE);
-        fileCopyLayout.setVisibility(View.GONE);
-
-        progressBar.setVisibility(View.GONE);
     }
 
     @Override
-    public void renameFile(Dialog menuDialog, String fileName, String filePath, int selectedFilePosition) {
+    public void renameFile(String fileName, String filePath, int selectedFilePosition) {
         footerLayout.setVisibility(View.GONE);
 
         final Dialog dialogRenameFile = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar);
@@ -523,21 +585,8 @@ public class StorageViewManager implements CommonFunctionInterface {
             if (txtRenameFile.getText().toString().trim().length() == 0) {
                 Toast.makeText(MyApplication.getInstance().getApplicationContext(), "Please enter file name", Toast.LENGTH_SHORT).show();
             }
-            StorageFilesModel model = storageViewModel.reName(rootPath, fileName, txtRenameFile.getText().toString().trim(), filePath);
-            if (model != null) {
-                model.setType(storageFilesModelArrayList.get(selectedFilePosition).getType());
-                storageFilesModelArrayList.get(selectedFilePosition);
-                storageFilesModelArrayList.remove(selectedFilePosition);
-                storageFilesModelArrayList.add(selectedFilePosition, model);
-                storageListAdapter.notifyDataSetChanged();
-            } else{
-                Toast.makeText(MyApplication.getInstance().getApplicationContext(), MyApplication.getInstance().getApplicationContext().getString(R.string.msg_prompt_not_renamed_you_dont_have_permission_to_rename), Toast.LENGTH_SHORT).show();
-            }
-
+            storageViewModel.reName(rootPath, fileName, txtRenameFile.getText().toString().trim(), filePath);
             dialogRenameFile.dismiss();
-            menuDialog.dismiss();
-            hideAllCheckBook();
-
         });
         btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -558,14 +607,8 @@ public class StorageViewManager implements CommonFunctionInterface {
             Button btnCreate = (Button) dialogNewFile.findViewById(R.id.btn_create);
             Button btnCancel = (Button) dialogNewFile.findViewById(R.id.btn_cancel);
             btnCreate.setOnClickListener(view -> {
-                StorageFilesModel model = storageViewModel.createFile(rootPath, txtNewFile.getText().toString().trim(), activity.getString(R.string.new_file));
-                if (model != null) {
-                    storageFilesModelArrayList.add(model);
-                    storageListAdapter.notifyDataSetChanged();
-                    Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_created), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_not_created_you_dont_have_permission_to_create_or_already_existed), Toast.LENGTH_SHORT).show();
-                }
+                storageViewModel.createFile(rootPath, txtNewFile.getText().toString().trim(), activity.getString(R.string.new_file));
+
                 dialogNewFile.dismiss();
             });
             btnCancel.setOnClickListener(view -> {
@@ -585,16 +628,8 @@ public class StorageViewManager implements CommonFunctionInterface {
             Button btnCreate = (Button) dialogNewFolder.findViewById(R.id.btn_create);
             Button btnCancel = (Button) dialogNewFolder.findViewById(R.id.btn_cancel);
             btnCreate.setOnClickListener(view -> {
-                StorageFilesModel model = storageViewModel.createFolder(rootPath, txtNewFolder.getText().toString().trim(), activity.getString(R.string.new_folder));
-                if (model != null) {
-                    storageFilesModelArrayList.add(model);
-                    storageListAdapter.notifyDataSetChanged();
-                    Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_created), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_not_created_you_dont_have_permission_to_create), Toast.LENGTH_SHORT).show();
-                }
-
-                dialogNewFolder.cancel();
+                storageViewModel.createFolder(rootPath, txtNewFolder.getText().toString().trim(), activity.getString(R.string.new_folder));
+                dialogNewFolder.dismiss();
             });
             btnCancel.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -639,16 +674,12 @@ public class StorageViewManager implements CommonFunctionInterface {
             menuDialog.dismiss();
             footerLayout.setVisibility(View.GONE);
             fileMoveLayout.setVisibility(View.VISIBLE);
-            for (int i = 0; i < storageFilesModelArrayList.size(); i++) {
-                StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(i);
-                storageFilesModel.setCheckboxVisible(false);
-            }
-            storageListAdapter.notifyDataSetChanged();
-            isCheckboxVisible = false;
+            resetCheckBox();
         });
         lblRenameFile.setOnClickListener(view -> {
+            menuDialog.dismiss();
             StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(selectedFilePosition);
-            renameFile(menuDialog, storageFilesModel.getFileName(), storageFilesModel.getFilePath(), selectedFilePosition);
+            renameFile(storageFilesModel.getFileName(), storageFilesModel.getFilePath(), selectedFilePosition);
         });
         lblFileDetails.setOnClickListener(view -> {
             menuDialog.dismiss();
@@ -775,10 +806,17 @@ public class StorageViewManager implements CommonFunctionInterface {
     }
 
     private void hideAllCheckBook () {
-        for (StorageFilesModel data: storageFilesModelArrayList
-             ) {
+        for (StorageFilesModel data: storageFilesModelArrayList) {
             data.setCheckboxVisible(false);
         }
         storageListAdapter.notifyDataSetChanged();
+    }
+
+    private void resetCheckBox () {
+        for (StorageFilesModel model:storageFilesModelArrayList) {
+            model.setCheckboxVisible(false);
+        }
+        storageListAdapter.notifyDataSetChanged();
+        isCheckboxVisible = false;
     }
 }

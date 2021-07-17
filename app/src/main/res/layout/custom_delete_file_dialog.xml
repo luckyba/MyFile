@@ -2,7 +2,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBlackTransparent"
     android:orientation="vertical">
 
     <LinearLayout
@@ -42,7 +41,7 @@
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:layout_weight="1"
-                android:background="@color/colorWhite"
+                android:background="?android:attr/selectableItemBackground"
                 android:clickable="true"
                 android:text="@string/btn_cancel"
                 android:textAllCaps="false"
@@ -54,10 +53,10 @@
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:layout_weight="1"
-                android:background="@drawable/rectangle_ripple_effect"
                 android:clickable="true"
                 android:text="@string/btn_lbl_okay"
                 android:textAllCaps="false"
+                android:background="?android:attr/selectableItemBackground"
                 android:textColor="@color/my_file_color_primary_dark"
                 android:textSize="16sp" />
         </LinearLayout>

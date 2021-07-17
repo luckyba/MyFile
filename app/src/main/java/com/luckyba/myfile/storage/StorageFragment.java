@@ -86,7 +86,7 @@ public class StorageFragment extends Fragment implements CommonListener.Communic
         storageListAdapter = new StorageListAdapter(getContext(), this);
         storageViewModel = new ViewModelProvider(this, FactoryViewModel.getInstance()).get(StorageViewModel.class);
         storageViewManager = new StorageViewManager(mRootView, storageViewModel, storageListAdapter
-                , listPathAdapter, getActivity(), new String[]{mParam1, mParam2});
+                , listPathAdapter, getActivity(), new String[]{mParam1, mParam2}, this);
 
 //        MyApplication.getInstance()
 //                .getContentResolver()
