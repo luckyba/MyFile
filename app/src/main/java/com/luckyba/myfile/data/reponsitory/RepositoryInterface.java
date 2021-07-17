@@ -6,6 +6,7 @@ import com.luckyba.myfile.data.model.StorageFilesModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public interface RepositoryInterface {
 
@@ -20,7 +21,7 @@ public interface RepositoryInterface {
 
     ArrayList<StorageFilesModel> copy (String outputPath, HashMap selectedFileHashMap);
 
-    boolean delete (String root, String fileName, String pathName);
+    List<Integer> delete (HashMap selectedHashMap);
 
     StorageFilesModel createFolder (String root, String folderName, String defaultNameFolder);
 

@@ -3,6 +3,7 @@ package com.luckyba.myfile.data.reponsitory;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
+import android.view.View;
 
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.data.model.DictionaryModel;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -103,8 +105,7 @@ public class FileRepository implements RepositoryInterface {
 
     @Override
     public ArrayList<StorageFilesModel> move(String outputPath, HashMap selectedFileHashMap) {
-        ArrayList<StorageFilesModel> storageFilesModels = null;
-
+        ArrayList<StorageFilesModel> storageFilesModels = new ArrayList<>();
         try {
             Set set = selectedFileHashMap.keySet();
             Iterator itr = set.iterator();
@@ -159,7 +160,7 @@ public class FileRepository implements RepositoryInterface {
 
     @Override
     public ArrayList<StorageFilesModel> copy(String outputPath, HashMap selectedFileHashMap) {
-        ArrayList<StorageFilesModel> storageFilesModels = null;
+        ArrayList<StorageFilesModel> storageFilesModels = new ArrayList<>();
         try {
             Set set = selectedFileHashMap.keySet();
             Iterator itr = set.iterator();
@@ -194,8 +195,24 @@ public class FileRepository implements RepositoryInterface {
     }
 
     @Override
-    public boolean delete(String root, String fileName, String pathName) {
-        return false;
+    public List<Integer> delete(HashMap selectedFileHashMap) {
+        List<Integer> listDeleted = new ArrayList<>();
+        try {
+            Set set = selectedFileHashMap.keySet();
+            Iterator itr = set.iterator();
+            while (itr.hasNext()) {
+                int i = Integer.parseInt(itr.next().toString());
+                File deleteFile = new File((String) selectedFileHashMap.get(i));//create file for selected file
+                boolean isDeleteFile = deleteFile.delete();//delete the file from memory
+                if (isDeleteFile) {
+                    listDeleted.add(i);
+                }
+            }
+        } catch (Exception e) {
+            MyApplication.getInstance().trackException(e);
+            e.printStackTrace();
+        }
+        return listDeleted;
     }
 
     @Override

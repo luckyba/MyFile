@@ -10,5 +10,5 @@ public interface CommonFunctionInterface {
     void extractZip(String fileName, final String filePath);
     void moveFile(String outputPath);
     void copyFile(String outputPath);
-    void renameFile(final Dialog menuDialog, String fileName, final String filePath, final int selectedFilePosition);
+    void renameFile(String fileName, final String filePath, final int selectedFilePosition);
 }
