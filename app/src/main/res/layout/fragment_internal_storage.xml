@@ -42,7 +42,7 @@
         android:id="@+id/recycler_view"
         android:layout_above="@+id/id_layout_footer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="fill_parent"
         android:layout_below="@+id/path_layout"
         android:scrollbars="vertical"
         android:visibility="gone" />

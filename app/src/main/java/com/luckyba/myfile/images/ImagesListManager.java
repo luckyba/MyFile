@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,12 +30,15 @@ public class ImagesListManager {
     private View mRootView;
     private ImagesListViewModel imagesListViewModel;
     private Activity activity;
+    private LifecycleOwner lifecycleOwner;
 
-    public ImagesListManager(View root, ImagesListViewModel viewModel, ImagesListAdapter adapter, Activity activity) {
+    public ImagesListManager(View root, ImagesListViewModel viewModel, ImagesListAdapter adapter
+            , Activity activity, LifecycleOwner owner) {
         mRootView = root;
         imagesListViewModel = viewModel;
         imagesListAdapter = adapter;
         this.activity = activity;
+        lifecycleOwner = owner;
         init();
     }
 
@@ -50,20 +54,20 @@ public class ImagesListManager {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(imagesListAdapter);
 
-        getImagesList();
+        imagesListViewModel.getAllInternal(Constant.ImageDir);
+        imagesListViewModel.getListMutableLiveData().observe(lifecycleOwner, this::updateListImage);
 
     }
 
-    private void getImagesList() {
-        imageListModelsArray = imagesListViewModel.getAllInternal(Constant.ImageDir);
-        if (imageListModelsArray.isEmpty()) {
+    private void updateListImage (ArrayList<MediaFileListModel> mediaFileListModels) {
+        if (mediaFileListModels.isEmpty()) {
             noMediaLayout.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
             noMediaLayout.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
         }
-        Log.d("fdsafsaf1", imageListModelsArray.toString());
+        imageListModelsArray = mediaFileListModels;
         imagesListAdapter.setData(imageListModelsArray);
         imagesListAdapter.notifyDataSetChanged();
     }

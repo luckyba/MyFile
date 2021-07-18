@@ -51,7 +51,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class StorageViewManager implements CommonFunctionInterface {
+public class StorageViewManager {
     private View mRootView;
     private String mParam1;
     private StorageListAdapter storageListAdapter;
@@ -154,6 +154,7 @@ public class StorageViewManager implements CommonFunctionInterface {
         lvPathName.setItemAnimator(new DefaultItemAnimator());
         lvPathName.setAdapter(listPathAdapter);
 
+
         recyclerView.setHasFixedSize(true);
 
         LinearLayoutManager mLayoutManager
@@ -253,7 +254,7 @@ public class StorageViewManager implements CommonFunctionInterface {
         } else {
             Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
         }
-        hideAllCheckBook();
+        resetCheckBox();
         progressBar.setVisibility(View.GONE);
     }
 
@@ -270,8 +271,7 @@ public class StorageViewManager implements CommonFunctionInterface {
         } else {
             Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
         }
-        hideAllCheckBook();
-        fileCopyLayout.setVisibility(View.GONE);
+        resetCheckBox();
         progressBar.setVisibility(View.GONE);
     }
 
@@ -286,7 +286,7 @@ public class StorageViewManager implements CommonFunctionInterface {
             Toast.makeText(MyApplication.getInstance().getApplicationContext(), MyApplication.getInstance().getApplicationContext().getString(R.string.msg_prompt_not_renamed_you_dont_have_permission_to_rename), Toast.LENGTH_SHORT).show();
         }
 
-        hideAllCheckBook();
+        resetCheckBox();
     }
 
     private void updateAfterCreateNewFile (StorageFilesModel storageFilesModel) {
@@ -296,7 +296,6 @@ public class StorageViewManager implements CommonFunctionInterface {
                 recyclerView.setVisibility(View.VISIBLE);
             }
             storageFilesModelArrayList.add(storageFilesModel);
-            storageListAdapter.setData(storageFilesModelArrayList);
             storageListAdapter.notifyDataSetChanged();
             Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_created), Toast.LENGTH_SHORT).show();
         } else {
@@ -311,7 +310,6 @@ public class StorageViewManager implements CommonFunctionInterface {
                 recyclerView.setVisibility(View.VISIBLE);
             }
             storageFilesModelArrayList.add(storageFilesModel);
-            storageListAdapter.setData(storageFilesModelArrayList);
             storageListAdapter.notifyDataSetChanged();
             Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_created), Toast.LENGTH_SHORT).show();
         } else {
@@ -325,7 +323,11 @@ public class StorageViewManager implements CommonFunctionInterface {
         for (Integer pos: listDeleted) {
             storageFilesModelArrayList.remove((int)pos);
         }
-        hideAllCheckBook();
+        if (storageFilesModelArrayList.isEmpty()) {
+            noMediaLayout.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        }
+        resetCheckBox();
     }
 
     public void onBackPressed (int navItemIndex, Activity activity) {
@@ -449,7 +451,6 @@ public class StorageViewManager implements CommonFunctionInterface {
         }
     }
 
-    @Override
     public void openFile(String fileName, String filePath) {
         File file = new File(filePath);
         if (file.isDirectory()) {//check if selected item is directory
@@ -514,7 +515,6 @@ public class StorageViewManager implements CommonFunctionInterface {
         }
     }
 
-    @Override
     public void deleteFile() {
         final Dialog dialogDeleteFile = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar);
         dialogDeleteFile.setContentView(R.layout.custom_delete_file_dialog);
@@ -534,7 +534,6 @@ public class StorageViewManager implements CommonFunctionInterface {
         btnCancel.setOnClickListener(view -> dialogDeleteFile.dismiss());
     }
 
-    @Override
     public void extractZip(String fileName, String filePath) {
         final Dialog extractZipDialog = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar);
         extractZipDialog.setContentView(R.layout.custom_extract_zip_dialog);
@@ -557,20 +556,6 @@ public class StorageViewManager implements CommonFunctionInterface {
 
     }
 
-    @Override
-    public void moveFile(String outputPath) {
-        progressBar.setVisibility(View.VISIBLE);
-        // need to handle thread here
-    }
-
-    // only copy file
-    @Override
-    public void copyFile(String outputPath) {
-        progressBar.setVisibility(View.VISIBLE);
-        // need to handle thread here
-    }
-
-    @Override
     public void renameFile(String fileName, String filePath, int selectedFilePosition) {
         footerLayout.setVisibility(View.GONE);
 
@@ -597,7 +582,6 @@ public class StorageViewManager implements CommonFunctionInterface {
         });
     }
 
-    @Override
     public void createNewFile() {
         if (!isCheckboxVisible) {
             final Dialog dialogNewFile = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar);
@@ -608,7 +592,6 @@ public class StorageViewManager implements CommonFunctionInterface {
             Button btnCancel = (Button) dialogNewFile.findViewById(R.id.btn_cancel);
             btnCreate.setOnClickListener(view -> {
                 storageViewModel.createFile(rootPath, txtNewFile.getText().toString().trim(), activity.getString(R.string.new_file));
-
                 dialogNewFile.dismiss();
             });
             btnCancel.setOnClickListener(view -> {
@@ -618,7 +601,6 @@ public class StorageViewManager implements CommonFunctionInterface {
         }
     }
 
-    @Override
     public void createNewFolder() {
         if (!isCheckboxVisible) {
             final Dialog dialogNewFolder = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar);
@@ -773,43 +755,29 @@ public class StorageViewManager implements CommonFunctionInterface {
     }
 
     private void viewBy(boolean click) {
-        int tmp;
-        if (storageFilesModelArrayList.size() % 2 == 0) {
-            tmp = storageFilesModelArrayList.size() / 2;
-        } else {
-            tmp = storageFilesModelArrayList.size() / 2 + 1;
-        }
+        GridLayoutManager layoutManager;
         if (isVerticalList && click || !isVerticalList && !click) {
-            numCol = tmp;
-            GridLayoutManager layoutManager;
-            if (numCol > 0 ){
-                layoutManager =
-                        new GridLayoutManager(activity, numCol);
-            } else {
-                layoutManager =
-                        new GridLayoutManager(activity, 10);
-            }
-            layoutManager.setOrientation(RecyclerView.HORIZONTAL);
-            recyclerView.setLayoutManager(layoutManager);
-            if (click)
-                isVerticalList = false;
-        } else {
-            numCol = 1;
-            GridLayoutManager layoutManager =
-                    new GridLayoutManager(activity, numCol);
+            layoutManager =
+                    new GridLayoutManager(activity, 2);
             layoutManager.setOrientation(RecyclerView.VERTICAL);
             recyclerView.setLayoutManager(layoutManager);
-            if (click)
+            if (click) {
+                storageListAdapter.setViewType(1);
+                isVerticalList = false;
+            }
+
+        } else {
+            layoutManager =
+                    new GridLayoutManager(activity, 1);
+            layoutManager.setOrientation(RecyclerView.VERTICAL);
+            recyclerView.setLayoutManager(layoutManager);
+            if (click) {
                 isVerticalList = true;
+                storageListAdapter.setViewType(0);
+            }
+
         }
 
-    }
-
-    private void hideAllCheckBook () {
-        for (StorageFilesModel data: storageFilesModelArrayList) {
-            data.setCheckboxVisible(false);
-        }
-        storageListAdapter.notifyDataSetChanged();
     }
 
     private void resetCheckBox () {

@@ -23,6 +23,7 @@ public class StorageListAdapter extends RecyclerView.Adapter<StorageViewHolder> 
     private ArrayList<StorageFilesModel> storageFilesModels = new ArrayList<>();
     private Context mContext;
     private CommonListener.ClickListener mListener;
+    private int viewType;
 
     public StorageListAdapter(Context context, CommonListener.ClickListener listener) {
         mContext = context;
@@ -36,8 +37,13 @@ public class StorageListAdapter extends RecyclerView.Adapter<StorageViewHolder> 
 
     @Override
     public StorageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext())
+        View itemView;
+        if (viewType == 0)
+            itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.media_list_item_view, parent, false);
+        else
+            itemView = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.media_list_item_view_mutiple_colum, parent, false);
 
         return new StorageViewHolder(itemView);
     }
@@ -119,4 +125,12 @@ public class StorageListAdapter extends RecyclerView.Adapter<StorageViewHolder> 
     }
 
 
+    @Override
+    public int getItemViewType(int position) {
+        return viewType;
+    }
+
+    public void setViewType (int viewType) {
+        this.viewType = viewType;
+    }
 }

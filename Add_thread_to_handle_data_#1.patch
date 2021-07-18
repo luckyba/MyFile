@@ -1,0 +1,1429 @@
+Index: app/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/build.gradle	(revision 736109d18130383668fe153f5c264acf5b2b4a59)
++++ app/build.gradle	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -21,6 +21,11 @@
+             minifyEnabled false
+             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+         }
++        debug {
++            minifyEnabled false
++            debuggable true
++        }
++
+     }
+     compileOptions {
+         sourceCompatibility JavaVersion.VERSION_1_8
+Index: app/src/main/java/com/luckyba/myfile/DocumentSamples.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/DocumentSamples.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
++++ app/src/main/java/com/luckyba/myfile/DocumentSamples.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -0,0 +1,405 @@
++/*
++ * Copyright (C) 2013 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package com.luckyba.myfile;
++import android.app.Activity;
++import android.content.ContentResolver;
++import android.content.Context;
++import android.content.Intent;
++import android.database.Cursor;
++import android.net.Uri;
++import android.os.Bundle;
++import android.os.Environment;
++import android.os.storage.StorageManager;
++import android.os.storage.StorageVolume;
++import android.provider.DocumentsContract;
++import android.provider.DocumentsContract.Document;
++import android.util.Log;
++import android.view.View;
++import android.view.View.OnClickListener;
++import android.widget.Button;
++import android.widget.CheckBox;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.OutputStream;
++/**
++ * Example that exercises client side of {@link DocumentsContract}.
++ */
++public class DocumentSamples extends Activity {
++    private static final String TAG = "DocumentsSample";
++    private static final int CODE_READ = 42;
++    private static final int CODE_WRITE = 43;
++    private static final int CODE_TREE = 44;
++    private static final int CODE_RENAME = 45;
++    private TextView mResult;
++    @Override
++    public void onCreate(Bundle icicle) {
++        super.onCreate(icicle);
++        final Context context = this;
++        final LinearLayout view = new LinearLayout(context);
++        view.setOrientation(LinearLayout.VERTICAL);
++        mResult = new TextView(context);
++        view.addView(mResult);
++        final CheckBox multiple = new CheckBox(context);
++        multiple.setText("ALLOW_MULTIPLE");
++        view.addView(multiple);
++        final CheckBox localOnly = new CheckBox(context);
++        localOnly.setText("LOCAL_ONLY");
++        view.addView(localOnly);
++        Button button;
++        button = new Button(context);
++        button.setText("OPEN_DOC */*");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("*/*");
++                if (multiple.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
++                }
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(intent, CODE_READ);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("OPEN_DOC image/*");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("image/*");
++                if (multiple.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
++                }
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(intent, CODE_READ);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("OPEN_DOC audio/ogg");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("audio/ogg");
++                if (multiple.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
++                }
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(intent, CODE_READ);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("OPEN_DOC text/plain, application/msword");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("*/*");
++                intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {
++                        "text/plain", "application/msword" });
++                if (multiple.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
++                }
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(intent, CODE_READ);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("CREATE_DOC text/plain");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("text/plain");
++                intent.putExtra(Intent.EXTRA_TITLE, "foobar.txt");
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(intent, CODE_WRITE);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("CREATE_DOC image/png");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("image/png");
++                intent.putExtra(Intent.EXTRA_TITLE, "mypicture.png");
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(intent, CODE_WRITE);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("GET_CONTENT */*");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("*/*");
++                if (multiple.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
++                }
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(Intent.createChooser(intent, "Kittens!"), CODE_READ);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("GET_CONTENT */* with content query \"FILE\"");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("*/*");
++                intent.putExtra(Intent.EXTRA_CONTENT_QUERY, "FILE");
++                if (multiple.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
++                }
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(Intent.createChooser(intent, "Kittens!"), CODE_READ);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("OPEN_DOC_TREE");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
++                if (localOnly.isChecked()) {
++                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
++                }
++                startActivityForResult(Intent.createChooser(intent, "Kittens!"), CODE_TREE);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("OPEN_DOC_TREE primary volume initial uri");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = getSystemService(StorageManager.class)
++                        .getPrimaryStorageVolume()
++                        .createOpenDocumentTreeIntent();
++                startActivityForResult(intent, CODE_TREE);
++            }
++        });
++        view.addView(button);
++        button = new Button(context);
++        button.setText("OPEN_DOC */* for rename");
++        button.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
++                intent.addCategory(Intent.CATEGORY_OPENABLE);
++                intent.setType("*/*");
++                startActivityForResult(intent, CODE_RENAME);
++            }
++        });
++        view.addView(button);
++        final ScrollView scroll = new ScrollView(context);
++        scroll.addView(view);
++        setContentView(scroll);
++    }
++    @Override
++    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
++        final ContentResolver cr = getContentResolver();
++        clearLog();
++        log("resultCode=" + resultCode);
++        log("data=" + String.valueOf(data));
++        final Uri uri = data != null ? data.getData() : null;
++        if (uri != null) {
++            log("isDocumentUri=" + DocumentsContract.isDocumentUri(this, uri));
++        } else {
++            log("missing URI?");
++            return;
++        }
++        if (requestCode == CODE_READ) {
++            try {
++                cr.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
++            } catch (SecurityException e) {
++                log("FAILED TO TAKE PERMISSION", e);
++            }
++            InputStream is = null;
++            try {
++                is = cr.openInputStream(uri);
++                log("read length=" + readFullyNoClose(is).length);
++            } catch (Exception e) {
++                log("FAILED TO READ", e);
++            } finally {
++                closeQuietly(is);
++            }
++        } else if (requestCode == CODE_WRITE) {
++            try {
++                cr.takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
++            } catch (SecurityException e) {
++                log("FAILED TO TAKE PERMISSION", e);
++            }
++            OutputStream os = null;
++            try {
++                os = cr.openOutputStream(uri);
++                os.write("THE COMPLETE WORKS OF SHAKESPEARE".getBytes());
++                log("wrote data");
++            } catch (Exception e) {
++                log("FAILED TO WRITE", e);
++            } finally {
++                closeQuietly(os);
++            }
++        } else if (requestCode == CODE_TREE) {
++            try {
++                cr.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
++            } catch (SecurityException e) {
++                log("FAILED TO TAKE PERMISSION", e);
++            }
++            // Find existing docs
++            Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri,
++                    DocumentsContract.getTreeDocumentId(uri));
++            Uri child = DocumentsContract.buildChildDocumentsUriUsingTree(uri,
++                    DocumentsContract.getTreeDocumentId(uri));
++            Cursor c = cr.query(child, new String[] {
++                    Document.COLUMN_DISPLAY_NAME, Document.COLUMN_MIME_TYPE }, null, null, null);
++            try {
++                while (c.moveToNext()) {
++                    log("found child=" + c.getString(0) + ", mime=" + c.getString(1));
++                }
++            } finally {
++                closeQuietly(c);
++            }
++            // Create some documents
++            Uri pic = createDocument(cr, doc, "image/png", "pic.png");
++            Uri dir = createDocument(cr, doc, Document.MIME_TYPE_DIR, "my dir");
++            Uri dirPic = createDocument(cr, dir, "image/png", "pic2.png");
++            log("created " + pic);
++            log("created " + dir);
++            log("created " + dirPic);
++            // Write to one of them
++            OutputStream os = null;
++            try {
++                os = cr.openOutputStream(dirPic);
++                os.write("THE COMPLETE WORKS OF SHAKESPEARE".getBytes());
++                log("wrote data");
++            } catch (Exception e) {
++                log("FAILED TO WRITE", e);
++            } finally {
++                closeQuietly(os);
++            }
++            // And delete the first pic
++            if (deleteDocument(cr, pic)) {
++                log("deleted untouched pic");
++            } else {
++                log("FAILED TO DELETE PIC");
++            }
++        } else if (requestCode == CODE_RENAME) {
++            final Uri newUri = renameDocument(cr, uri, "MEOW.TEST");
++            log("rename result=" + newUri);
++            InputStream is = null;
++            try {
++                is = cr.openInputStream(newUri);
++                log("read length=" + readFullyNoClose(is).length);
++            } catch (Exception e) {
++                log("FAILED TO READ", e);
++            } finally {
++                closeQuietly(is);
++            }
++        }
++    }
++    private Uri createDocument(ContentResolver resolver, Uri documentUri, String mimeType,
++                               String displayName) {
++        Uri uri;
++        try {
++            uri = DocumentsContract.createDocument(resolver, documentUri, mimeType, displayName);
++        } catch (Exception e) {
++            uri = null;
++        }
++        return uri;
++    }
++    private boolean deleteDocument(ContentResolver resolver, Uri documentUri) {
++        try {
++            return DocumentsContract.deleteDocument(resolver, documentUri);
++        } catch (Exception e) {
++            return false;
++        }
++    }
++    private Uri renameDocument(ContentResolver resolver, Uri uri, String newName) {
++        try {
++            return DocumentsContract.renameDocument(resolver, uri, newName);
++        } catch (Exception e) {
++            return null;
++        }
++    }
++    private void clearLog() {
++        mResult.setText(null);
++    }
++    private void log(String msg) {
++        log(msg, null);
++    }
++    private void log(String msg, Throwable t) {
++        Log.d(TAG, msg, t);
++        mResult.setText(mResult.getText() + "\n" + msg);
++    }
++    public static byte[] readFullyNoClose(InputStream in) throws IOException {
++        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
++        byte[] buffer = new byte[1024];
++        int count;
++        while ((count = in.read(buffer)) != -1) {
++            bytes.write(buffer, 0, count);
++        }
++        return bytes.toByteArray();
++    }
++    public static void closeQuietly(AutoCloseable closeable) {
++        if (closeable != null) {
++            try {
++                closeable.close();
++            } catch (RuntimeException rethrown) {
++                throw rethrown;
++            } catch (Exception ignored) {
++            }
++        }
++    }
++}
+\ No newline at end of file
+Index: app/src/main/java/com/luckyba/myfile/Example.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/Example.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
++++ app/src/main/java/com/luckyba/myfile/Example.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -0,0 +1,12 @@
++package com.luckyba.myfile;
++
++import java.util.concurrent.BlockingQueue;
++import java.util.concurrent.ThreadPoolExecutor;
++import java.util.concurrent.TimeUnit;
++
++public class Example extends ThreadPoolExecutor {
++
++    public Example(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue) {
++        super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
++    }
++}
+Index: app/src/main/java/com/luckyba/myfile/common/CommonFunctionInterface.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/common/CommonFunctionInterface.java	(revision 736109d18130383668fe153f5c264acf5b2b4a59)
++++ app/src/main/java/com/luckyba/myfile/common/CommonFunctionInterface.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -10,5 +10,5 @@
+     void extractZip(String fileName, final String filePath);
+     void moveFile(String outputPath);
+     void copyFile(String outputPath);
+-    void renameFile(final Dialog menuDialog, String fileName, final String filePath, final int selectedFilePosition);
++    void renameFile(String fileName, final String filePath, final int selectedFilePosition);
+ }
+Index: app/src/main/java/com/luckyba/myfile/data/model/TaskRunner.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/data/model/TaskRunner.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
++++ app/src/main/java/com/luckyba/myfile/data/model/TaskRunner.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -0,0 +1,175 @@
++package com.luckyba.myfile.data.model;
++
++import android.annotation.SuppressLint;
++import android.os.Handler;
++import android.os.Looper;
++import android.util.Log;
++
++import com.luckyba.myfile.data.reponsitory.FileRepository;
++
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.Hashtable;
++import java.util.List;
++import java.util.concurrent.Callable;
++import java.util.concurrent.ExecutionException;
++import java.util.concurrent.Executor;
++import java.util.concurrent.Executors;
++
++public class TaskRunner {
++    private final  Executor executor = Executors.newScheduledThreadPool(8); // change according to your requirements
++    private final Handler handler = new Handler(Looper.getMainLooper());
++    @SuppressLint("StaticFieldLeak")
++    private  static FileRepository fileRepository;
++
++    public TaskRunner(FileRepository fileRepository) {
++        TaskRunner.fileRepository = fileRepository;
++    }
++
++    public interface Callback<R> {
++        void onComplete(R result);
++    }
++
++    public <R> void executeAsync(Callable<R> callable, Callback<R> callback) {
++        executor.execute(() -> {
++            try {
++                final R result = callable.call();
++                handler.post(() -> {
++                    callback.onComplete(result);
++                });
++            } catch (Exception e) {
++                Log.d("fdsafs", "can't excuse this function ");
++                e.printStackTrace();
++            }
++
++        });
++    }
++
++    public static class LoadData implements Callable<ArrayList<StorageFilesModel>> {
++        private final String pathName;
++
++        public LoadData(String pathName) {
++            this.pathName = pathName;
++        }
++
++        @Override
++        public ArrayList<StorageFilesModel> call() {
++            return fileRepository.getAllFile(pathName);
++        }
++    }
++
++    public static class CopyData implements Callable<ArrayList<StorageFilesModel>> {
++        private final String pathName;
++        private final HashMap selectedMap;
++
++        public CopyData(String pathName, HashMap selectedMap) {
++            this.pathName = pathName;
++            this.selectedMap = selectedMap;
++        }
++
++        @Override
++        public ArrayList<StorageFilesModel> call() {
++            return fileRepository.copy(pathName, selectedMap);
++        }
++    }
++
++    public static class MoveData implements Callable<ArrayList<StorageFilesModel>> {
++        private final String pathName;
++        private final HashMap selectedMap;
++
++        public MoveData(String pathName, HashMap selectedMap) {
++            this.pathName = pathName;
++            this.selectedMap = selectedMap;
++        }
++
++        @Override
++        public ArrayList<StorageFilesModel> call() {
++            return fileRepository.move(pathName, selectedMap);
++        }
++    }
++
++    public static class DeleteData implements Callable<List<Integer>> {
++        private final HashMap listSelected;
++
++        public DeleteData(HashMap listSelected) {
++            this.listSelected = listSelected;
++        }
++
++        @Override
++        public List<Integer> call() {
++            return fileRepository.delete(listSelected);
++        }
++    }
++
++    public static class ExtractData implements Callable<Boolean> {
++        private final String rootPath;
++        private final String fileName;
++        private final String pathName;
++
++        public ExtractData (String rootPath, String fileName, String pathName) {
++            this.rootPath = rootPath;
++            this.fileName = fileName;
++            this.pathName = pathName;
++        }
++
++        @Override
++        public Boolean call() {
++            return fileRepository.extract(rootPath, fileName, pathName);
++        }
++    }
++
++    public static class CreateFolderData implements Callable<StorageFilesModel> {
++        private final String rootPath;
++        private final String folderName;
++        private final String defaultName;
++
++        public CreateFolderData(String rootPath, String folderName, String defaultName) {
++            this.rootPath = rootPath;
++            this.folderName = folderName;
++            this.defaultName = defaultName;
++        }
++
++        @Override
++        public StorageFilesModel call() {
++            return fileRepository.createFolder(rootPath, folderName, defaultName);
++        }
++    }
++
++    public static class RenameData implements Callable<StorageFilesModel> {
++        private final String rootPath;
++        private final String oldName;
++        private final String newName;
++        private final String filePath;
++
++        public RenameData(String rootPath, String oldName, String newName, String filePath) {
++            this.rootPath = rootPath;
++            this.oldName = oldName;
++            this.newName = newName;
++            this.filePath = filePath;
++        }
++
++        @Override
++        public StorageFilesModel call() {
++            return fileRepository.reName(rootPath, oldName, newName, filePath);
++        }
++    }
++
++    public static class CreateFileData implements Callable<StorageFilesModel> {
++        private final String rootPath;
++        private final String fileName;
++        private final String defaultName;
++
++        public CreateFileData(String rootPath, String fileName, String defaultName) {
++            this.rootPath = rootPath;
++            this.fileName = fileName;
++            this.defaultName = defaultName;
++        }
++
++        @Override
++        public StorageFilesModel call() {
++            return fileRepository.createFile(rootPath, fileName, defaultName);
++        }
++    }
++
++
++}
+Index: app/src/main/java/com/luckyba/myfile/data/reponsitory/FileRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/data/reponsitory/FileRepository.java	(revision 736109d18130383668fe153f5c264acf5b2b4a59)
++++ app/src/main/java/com/luckyba/myfile/data/reponsitory/FileRepository.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -3,6 +3,7 @@
+ import android.content.Context;
+ import android.database.Cursor;
+ import android.util.Log;
++import android.view.View;
+ 
+ import com.luckyba.myfile.app.MyApplication;
+ import com.luckyba.myfile.data.model.DictionaryModel;
+@@ -20,6 +21,7 @@
+ import java.util.Date;
+ import java.util.HashMap;
+ import java.util.Iterator;
++import java.util.List;
+ import java.util.Objects;
+ import java.util.Set;
+ import java.util.zip.ZipEntry;
+@@ -103,8 +105,7 @@
+ 
+     @Override
+     public ArrayList<StorageFilesModel> move(String outputPath, HashMap selectedFileHashMap) {
+-        ArrayList<StorageFilesModel> storageFilesModels = null;
+-
++        ArrayList<StorageFilesModel> storageFilesModels = new ArrayList<>();
+         try {
+             Set set = selectedFileHashMap.keySet();
+             Iterator itr = set.iterator();
+@@ -159,7 +160,7 @@
+ 
+     @Override
+     public ArrayList<StorageFilesModel> copy(String outputPath, HashMap selectedFileHashMap) {
+-        ArrayList<StorageFilesModel> storageFilesModels = null;
++        ArrayList<StorageFilesModel> storageFilesModels = new ArrayList<>();
+         try {
+             Set set = selectedFileHashMap.keySet();
+             Iterator itr = set.iterator();
+@@ -194,8 +195,24 @@
+     }
+ 
+     @Override
+-    public boolean delete(String root, String fileName, String pathName) {
+-        return false;
++    public List<Integer> delete(HashMap selectedFileHashMap) {
++        List<Integer> listDeleted = new ArrayList<>();
++        try {
++            Set set = selectedFileHashMap.keySet();
++            Iterator itr = set.iterator();
++            while (itr.hasNext()) {
++                int i = Integer.parseInt(itr.next().toString());
++                File deleteFile = new File((String) selectedFileHashMap.get(i));//create file for selected file
++                boolean isDeleteFile = deleteFile.delete();//delete the file from memory
++                if (isDeleteFile) {
++                    listDeleted.add(i);
++                }
++            }
++        } catch (Exception e) {
++            MyApplication.getInstance().trackException(e);
++            e.printStackTrace();
++        }
++        return listDeleted;
+     }
+ 
+     @Override
+Index: app/src/main/java/com/luckyba/myfile/data/reponsitory/RepositoryInterface.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/data/reponsitory/RepositoryInterface.java	(revision 736109d18130383668fe153f5c264acf5b2b4a59)
++++ app/src/main/java/com/luckyba/myfile/data/reponsitory/RepositoryInterface.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -6,6 +6,7 @@
+ 
+ import java.util.ArrayList;
+ import java.util.HashMap;
++import java.util.List;
+ 
+ public interface RepositoryInterface {
+ 
+@@ -20,7 +21,7 @@
+ 
+     ArrayList<StorageFilesModel> copy (String outputPath, HashMap selectedFileHashMap);
+ 
+-    boolean delete (String root, String fileName, String pathName);
++    List<Integer> delete (HashMap selectedHashMap);
+ 
+     StorageFilesModel createFolder (String root, String folderName, String defaultNameFolder);
+ 
+Index: app/src/main/java/com/luckyba/myfile/storage/StorageFragment.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/storage/StorageFragment.java	(revision 736109d18130383668fe153f5c264acf5b2b4a59)
++++ app/src/main/java/com/luckyba/myfile/storage/StorageFragment.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -86,7 +86,7 @@
+         storageListAdapter = new StorageListAdapter(getContext(), this);
+         storageViewModel = new ViewModelProvider(this, FactoryViewModel.getInstance()).get(StorageViewModel.class);
+         storageViewManager = new StorageViewManager(mRootView, storageViewModel, storageListAdapter
+-                , listPathAdapter, getActivity(), new String[]{mParam1, mParam2});
++                , listPathAdapter, getActivity(), new String[]{mParam1, mParam2}, this);
+ 
+ //        MyApplication.getInstance()
+ //                .getContentResolver()
+Index: app/src/main/java/com/luckyba/myfile/storage/StorageViewManager.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/storage/StorageViewManager.java	(revision 736109d18130383668fe153f5c264acf5b2b4a59)
++++ app/src/main/java/com/luckyba/myfile/storage/StorageViewManager.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -8,6 +8,7 @@
+ import android.media.MediaPlayer;
+ import android.net.Uri;
+ import android.os.Environment;
++import android.util.Log;
+ import android.view.KeyEvent;
+ import android.view.View;
+ import android.view.animation.Animation;
+@@ -23,6 +24,7 @@
+ 
+ import androidx.core.content.ContextCompat;
+ import androidx.core.content.FileProvider;
++import androidx.lifecycle.LifecycleOwner;
+ import androidx.recyclerview.widget.DefaultItemAnimator;
+ import androidx.recyclerview.widget.GridLayoutManager;
+ import androidx.recyclerview.widget.LinearLayoutManager;
+@@ -42,6 +44,7 @@
+ import java.io.File;
+ import java.io.IOException;
+ import java.util.ArrayList;
++import java.util.Comparator;
+ import java.util.Date;
+ import java.util.HashMap;
+ import java.util.Iterator;
+@@ -52,6 +55,7 @@
+     private View mRootView;
+     private String mParam1;
+     private StorageListAdapter storageListAdapter;
++    private LifecycleOwner lifecycleOwner;
+     private RecyclerView recyclerView;
+     private LinearLayout noMediaLayout, noMemoryCard;
+ 
+@@ -81,16 +85,15 @@
+     private boolean isVerticalList = true;
+     private int numCol = 1;
+ 
+-    private boolean isCopy = false;
+-
+-
+     public StorageViewManager(View root, StorageViewModel viewModel
+-            , StorageListAdapter adapter, ListPathAdapter listPathAdapter, Activity activity, String[] agr) {
++            , StorageListAdapter adapter, ListPathAdapter listPathAdapter, Activity activity, String[] agr
++            , LifecycleOwner lifecycleOwner) {
+         mRootView = root;
+         storageListAdapter = adapter;
+         storageViewModel = viewModel;
+         this.listPathAdapter = listPathAdapter;
+         this.activity = activity;
++        this.lifecycleOwner = lifecycleOwner;
+         mParam1 = agr[0];
+         init();
+     }
+@@ -100,21 +103,21 @@
+         arrayListFilePaths = new ArrayList<>();
+         arrayListFileNames = new ArrayList<>();
+         storageListAdapter.setData(storageFilesModelArrayList);
+-
++        storageListAdapter.notifyDataSetChanged();
+         initView();
+         initListener();
+         if (mParam1.equals(Constant.INTERNAL_STORAGE)) {
+             rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+             arrayListFilePaths.add(rootPath);
+             arrayListFileNames.add(activity.getString(R.string.internal_storage));
+-            getFilesList(rootPath);
++            storageViewModel.getAllInternal(rootPath);
+         } else {
+             if (StorageHelper.isExternalStorageReadable()) {
+                 rootPath = System.getenv("SECONDARY_STORAGE");
+                 if (rootPath != null) {
+                     arrayListFilePaths.add(rootPath);
+                     arrayListFileNames.add(activity.getString(R.string.external_storage));
+-                    getFilesList(rootPath);
++                    storageViewModel.getAllInternal(rootPath);
+                 } else {
+                     recyclerView.setVisibility(View.GONE);
+                     noMediaLayout.setVisibility(View.GONE);
+@@ -163,17 +166,27 @@
+     }
+ 
+     private void initListener() {
+-        imgDelete.setOnClickListener(view -> deleteFile());
++        imgDelete.setOnClickListener(view -> {
++            footerLayout.setVisibility(View.GONE);
++            deleteFile();
++        });
+ 
+         imgMenu.setOnClickListener(view -> showMenu());
+ 
+         tvMoveCancel.setOnClickListener(view -> {
+             selectedFileHashMap.clear();
+             isCheckboxVisible = false;
++            footerLayout.setVisibility(View.GONE);
+             fileMoveLayout.setVisibility(View.GONE);
+         });
+ 
+-        tvMoveFile.setOnClickListener(view -> moveFile(arrayListFilePaths.get(arrayListFilePaths.size()-1)));
++        tvMoveFile.setOnClickListener(view ->
++        {
++            progressBar.setVisibility(View.VISIBLE);
++            footerLayout.setVisibility(View.GONE);
++            fileMoveLayout.setVisibility(View.GONE);
++            storageViewModel.move(arrayListFilePaths.get(arrayListFilePaths.size() - 1), selectedFileHashMap);
++        });
+ 
+         tvCopyCancel.setOnClickListener(view -> {
+             selectedFileHashMap.clear();
+@@ -181,27 +194,32 @@
+             fileCopyLayout.setVisibility(View.GONE);
+         });
+ 
+-        tvPasteFile.setOnClickListener(view -> copyFile(arrayListFilePaths.get(arrayListFilePaths.size()-1)));
++        tvPasteFile.setOnClickListener(view -> {
++            progressBar.setVisibility(View.VISIBLE);
++            fileCopyLayout.setVisibility(View.GONE);
++            storageViewModel.copy(arrayListFilePaths.get(arrayListFilePaths.size() - 1), selectedFileHashMap);
++        });
+ 
+         imgFileCopy.setOnClickListener(view -> {
+             footerLayout.setVisibility(View.GONE);
+             fileCopyLayout.setVisibility(View.VISIBLE);
+-            for (int i = 0; i < storageFilesModelArrayList.size(); i++) {
+-                StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(i);
+-                storageFilesModel.setCheckboxVisible(false);
+-            }
+-            storageListAdapter.notifyDataSetChanged();
+-            isCheckboxVisible = false;
++            resetCheckBox();
+         });
+ 
+         viewBy.setOnClickListener(v -> viewBy(true));
+-    }
+ 
+-    private void getFilesList(String filePath) {
+-        rootPath = filePath;
++        storageViewModel.getLoadAllData().observe(lifecycleOwner, this::updateFilesList);
++        storageViewModel.getExtractLiveData().observe(lifecycleOwner, this::updateAfterExtract);
++        storageViewModel.getMoveLiveData().observe(lifecycleOwner, this::updateAfterMove);
++        storageViewModel.getCopyLiveData().observe(lifecycleOwner, this::updateAfterCopyFile);
++        storageViewModel.getReNameLiveData().observe(lifecycleOwner, this::updateAfterRename);
++        storageViewModel.getCreateFileLiveData().observe(lifecycleOwner, this::updateAfterCreateNewFile);
++        storageViewModel.getCreateFolderLiveData().observe(lifecycleOwner, this::updateAfterCreateNewFolder);
++        storageViewModel.getDeleteNameLiveData().observe(lifecycleOwner, this::updateAfterDelete);
++    }
+ 
+-        storageFilesModelArrayList = storageViewModel.getAllInternal(filePath);
+-        if (storageFilesModelArrayList.isEmpty()) {
++    private void updateFilesList(ArrayList<StorageFilesModel> data) {
++        if (data.isEmpty()) {
+             noMediaLayout.setVisibility(View.VISIBLE);
+             recyclerView.setVisibility(View.GONE);
+         } else {
+@@ -210,9 +228,104 @@
+         }
+         listPathAdapter.setData(arrayListFileNames);
+         listPathAdapter.notifyDataSetChanged();
++        storageFilesModelArrayList = data;
++        storageListAdapter.setData(storageFilesModelArrayList);
++        storageListAdapter.notifyDataSetChanged();
++    }
++
++    private void updateAfterExtract(Boolean result) {
++        if (result) {
++            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.successfully_extracted), Toast.LENGTH_SHORT).show();
++        } else {
++            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.fail_extracted), Toast.LENGTH_SHORT).show();
++        }
++        progressBar.setVisibility(View.GONE);
++    }
++
++    private void updateAfterMove (ArrayList<StorageFilesModel> storageFilesModels) {
++        if (noMediaLayout.getVisibility() == View.VISIBLE) {
++            noMediaLayout.setVisibility(View.GONE);
++            recyclerView.setVisibility(View.VISIBLE);
++        }
++        if (!storageFilesModels.isEmpty()) {
++            storageFilesModelArrayList.addAll(storageFilesModels);
++            selectedFileHashMap.clear();
++        } else {
++            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
++        }
++        hideAllCheckBook();
++        progressBar.setVisibility(View.GONE);
++    }
++
++    private void updateAfterCopyFile (ArrayList<StorageFilesModel> storageFilesModels) {
++        //if storageFilesModels large thread to handle it
++        if (noMediaLayout.getVisibility() == View.VISIBLE) {
++            noMediaLayout.setVisibility(View.GONE);
++            recyclerView.setVisibility(View.VISIBLE);
++        }
++
++        if (!storageFilesModels.isEmpty()) {
++            storageFilesModelArrayList.addAll(storageFilesModels);
++            selectedFileHashMap.clear();
++        } else {
++            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
++        }
++        hideAllCheckBook();
++        fileCopyLayout.setVisibility(View.GONE);
++        progressBar.setVisibility(View.GONE);
++    }
+ 
+-        storageListAdapter.setData(storageFilesModelArrayList);
+-        storageListAdapter.notifyDataSetChanged();
++    private void updateAfterRename (StorageFilesModel storageFilesModel) {
++        if (storageFilesModel != null) {
++            storageFilesModel.setType(storageFilesModelArrayList.get(selectedFilePosition).getType());
++            storageFilesModelArrayList.get(selectedFilePosition);
++            storageFilesModelArrayList.remove(selectedFilePosition);
++            storageFilesModelArrayList.add(selectedFilePosition, storageFilesModel);
++            storageListAdapter.notifyDataSetChanged();
++        } else{
++            Toast.makeText(MyApplication.getInstance().getApplicationContext(), MyApplication.getInstance().getApplicationContext().getString(R.string.msg_prompt_not_renamed_you_dont_have_permission_to_rename), Toast.LENGTH_SHORT).show();
++        }
++
++        hideAllCheckBook();
++    }
++
++    private void updateAfterCreateNewFile (StorageFilesModel storageFilesModel) {
++        if (storageFilesModel != null) {
++            if (noMediaLayout.getVisibility() == View.VISIBLE) {
++                noMediaLayout.setVisibility(View.GONE);
++                recyclerView.setVisibility(View.VISIBLE);
++            }
++            storageFilesModelArrayList.add(storageFilesModel);
++            storageListAdapter.setData(storageFilesModelArrayList);
++            storageListAdapter.notifyDataSetChanged();
++            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_created), Toast.LENGTH_SHORT).show();
++        } else {
++            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_not_created_you_dont_have_permission_to_create_or_already_existed), Toast.LENGTH_SHORT).show();
++        }
++    }
++
++    private void updateAfterCreateNewFolder (StorageFilesModel storageFilesModel) {
++        if (storageFilesModel != null) {
++            if (noMediaLayout.getVisibility() == View.VISIBLE) {
++                noMediaLayout.setVisibility(View.GONE);
++                recyclerView.setVisibility(View.VISIBLE);
++            }
++            storageFilesModelArrayList.add(storageFilesModel);
++            storageListAdapter.setData(storageFilesModelArrayList);
++            storageListAdapter.notifyDataSetChanged();
++            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_created), Toast.LENGTH_SHORT).show();
++        } else {
++            Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_not_created_you_dont_have_permission_to_create), Toast.LENGTH_SHORT).show();
++        }
++    }
++
++    private void updateAfterDelete (List<Integer> listDeleted) {
++        selectedFileHashMap.clear();
++        listDeleted.sort(Comparator.reverseOrder());
++        for (Integer pos: listDeleted) {
++            storageFilesModelArrayList.remove((int)pos);
++        }
++        hideAllCheckBook();
+     }
+ 
+     public void onBackPressed (int navItemIndex, Activity activity) {
+@@ -238,7 +351,10 @@
+                         if (arrayListFilePaths.size() != 0) {
+                             if (arrayListFilePaths.size() >= 2) {
+                                 storageFilesModelArrayList.clear();
+-                                getFilesList(arrayListFilePaths.get(arrayListFilePaths.size() - 2));
++//                                getFilesList(arrayListFilePaths.get(arrayListFilePaths.size() - 2));
++                                rootPath = arrayListFilePaths.get(arrayListFilePaths.size() - 2);
++                                storageViewModel.getAllInternal(rootPath);
++
+                                 storageListAdapter.notifyDataSetChanged();
+                             }
+                             arrayListFilePaths.remove(arrayListFilePaths.size() - 1);
+@@ -333,11 +449,6 @@
+         }
+     }
+ 
+-    public void setDataChange(StorageFilesModel data) {
+-        storageFilesModelArrayList.add(data);
+-        storageListAdapter.notifyDataSetChanged();
+-    }
+-
+     @Override
+     public void openFile(String fileName, String filePath) {
+         File file = new File(filePath);
+@@ -345,7 +456,9 @@
+             if (file.canRead()) {//if directory is readable
+                 storageFilesModelArrayList.clear();
+                 arrayListFilePaths.add(filePath);
+-                getFilesList(filePath);
++
++                rootPath = filePath;
++                storageViewModel.getAllInternal(filePath);
+ 
+                 viewBy(false);
+                 storageListAdapter.notifyDataSetChanged();
+@@ -415,27 +528,8 @@
+             lblDeleteFile.setText(MyApplication.getInstance().getApplicationContext().getResources().getString(R.string.lbl_delete_multiple_files));
+         }
+         btnOkay.setOnClickListener(view -> {
+-            try {
+-                Set set = selectedFileHashMap.keySet();
+-                Iterator itr = set.iterator();
+-                while (itr.hasNext()) {
+-                    int i = Integer.parseInt(itr.next().toString());
+-                    File deleteFile = new File((String) selectedFileHashMap.get(i));//create file for selected file
+-                    boolean isDeleteFile = deleteFile.delete();//delete the file from memory
+-                    if (isDeleteFile) {
+-                        selectedFileHashMap.remove(i);
+-                        StorageFilesModel model = storageFilesModelArrayList.get(i);
+-                        storageFilesModelArrayList.remove(model);//remove file from listview
+-                        storageListAdapter.notifyDataSetChanged();//refresh the adapter
+-                        selectedFileHashMap.remove(selectedFilePosition);
+-                    }
+-                }
+-                dialogDeleteFile.dismiss();
+-                footerLayout.setVisibility(View.GONE);
+-            } catch (Exception e) {
+-                MyApplication.getInstance().trackException(e);
+-                e.printStackTrace();
+-            }
++            dialogDeleteFile.dismiss();
++            storageViewModel.delete(selectedFileHashMap);
+         });
+         btnCancel.setOnClickListener(view -> dialogDeleteFile.dismiss());
+     }
+@@ -456,14 +550,7 @@
+             extractZipDialog.dismiss();
+             progressBar.setVisibility(View.VISIBLE);
+             // need to handle thread here.
+-            if (storageViewModel.extract(rootPath, fileName, filePath)) {
+-                Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.successfully_extracted), Toast.LENGTH_SHORT).show();
+-            } else {
+-                Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.fail_extracted), Toast.LENGTH_SHORT).show();
+-            }
+-            progressBar.setVisibility(View.GONE);
+-            extractZipDialog.dismiss();
+-
++            storageViewModel.extract(rootPath, fileName, filePath);
+         });
+ 
+         extractZipDialog.show();
+@@ -474,17 +561,6 @@
+     public void moveFile(String outputPath) {
+         progressBar.setVisibility(View.VISIBLE);
+         // need to handle thread here
+-        ArrayList<StorageFilesModel> storageFilesModels = storageViewModel.move(outputPath, selectedFileHashMap);
+-        if (storageFilesModels != null) {
+-            storageFilesModelArrayList.addAll(storageFilesModels);
+-            storageListAdapter.notifyDataSetChanged();//refresh the adapter
+-            selectedFileHashMap.clear();
+-        } else {
+-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
+-        }
+-        footerLayout.setVisibility(View.GONE);
+-        fileMoveLayout.setVisibility(View.GONE);
+-        progressBar.setVisibility(View.GONE);
+     }
+ 
+     // only copy file
+@@ -492,24 +568,10 @@
+     public void copyFile(String outputPath) {
+         progressBar.setVisibility(View.VISIBLE);
+         // need to handle thread here
+-        ArrayList<StorageFilesModel> storageFilesModels = storageViewModel.copy(outputPath, selectedFileHashMap);
+-        if (storageFilesModels != null) {
+-            storageFilesModelArrayList.addAll(storageFilesModels);
+-            storageListAdapter.setData(storageFilesModelArrayList);
+-            storageListAdapter.notifyDataSetChanged();//refresh the adapter
+-            selectedFileHashMap.clear();
+-        } else {
+-            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
+-        }
+-
+-        footerLayout.setVisibility(View.GONE);
+-        fileCopyLayout.setVisibility(View.GONE);
+-
+-        progressBar.setVisibility(View.GONE);
+     }
+ 
+     @Override
+-    public void renameFile(Dialog menuDialog, String fileName, String filePath, int selectedFilePosition) {
++    public void renameFile(String fileName, String filePath, int selectedFilePosition) {
+         footerLayout.setVisibility(View.GONE);
+ 
+         final Dialog dialogRenameFile = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar);
+@@ -523,21 +585,8 @@
+             if (txtRenameFile.getText().toString().trim().length() == 0) {
+                 Toast.makeText(MyApplication.getInstance().getApplicationContext(), "Please enter file name", Toast.LENGTH_SHORT).show();
+             }
+-            StorageFilesModel model = storageViewModel.reName(rootPath, fileName, txtRenameFile.getText().toString().trim(), filePath);
+-            if (model != null) {
+-                model.setType(storageFilesModelArrayList.get(selectedFilePosition).getType());
+-                storageFilesModelArrayList.get(selectedFilePosition);
+-                storageFilesModelArrayList.remove(selectedFilePosition);
+-                storageFilesModelArrayList.add(selectedFilePosition, model);
+-                storageListAdapter.notifyDataSetChanged();
+-            } else{
+-                Toast.makeText(MyApplication.getInstance().getApplicationContext(), MyApplication.getInstance().getApplicationContext().getString(R.string.msg_prompt_not_renamed_you_dont_have_permission_to_rename), Toast.LENGTH_SHORT).show();
+-            }
+-
++            storageViewModel.reName(rootPath, fileName, txtRenameFile.getText().toString().trim(), filePath);
+             dialogRenameFile.dismiss();
+-            menuDialog.dismiss();
+-            hideAllCheckBook();
+-
+         });
+         btnCancel.setOnClickListener(new View.OnClickListener() {
+             @Override
+@@ -558,14 +607,8 @@
+             Button btnCreate = (Button) dialogNewFile.findViewById(R.id.btn_create);
+             Button btnCancel = (Button) dialogNewFile.findViewById(R.id.btn_cancel);
+             btnCreate.setOnClickListener(view -> {
+-                StorageFilesModel model = storageViewModel.createFile(rootPath, txtNewFile.getText().toString().trim(), activity.getString(R.string.new_file));
+-                if (model != null) {
+-                    storageFilesModelArrayList.add(model);
+-                    storageListAdapter.notifyDataSetChanged();
+-                    Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_created), Toast.LENGTH_SHORT).show();
+-                } else {
+-                    Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_not_created_you_dont_have_permission_to_create_or_already_existed), Toast.LENGTH_SHORT).show();
+-                }
++                storageViewModel.createFile(rootPath, txtNewFile.getText().toString().trim(), activity.getString(R.string.new_file));
++
+                 dialogNewFile.dismiss();
+             });
+             btnCancel.setOnClickListener(view -> {
+@@ -585,16 +628,8 @@
+             Button btnCreate = (Button) dialogNewFolder.findViewById(R.id.btn_create);
+             Button btnCancel = (Button) dialogNewFolder.findViewById(R.id.btn_cancel);
+             btnCreate.setOnClickListener(view -> {
+-                StorageFilesModel model = storageViewModel.createFolder(rootPath, txtNewFolder.getText().toString().trim(), activity.getString(R.string.new_folder));
+-                if (model != null) {
+-                    storageFilesModelArrayList.add(model);
+-                    storageListAdapter.notifyDataSetChanged();
+-                    Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_created), Toast.LENGTH_SHORT).show();
+-                } else {
+-                    Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_not_created_you_dont_have_permission_to_create), Toast.LENGTH_SHORT).show();
+-                }
+-
+-                dialogNewFolder.cancel();
++                storageViewModel.createFolder(rootPath, txtNewFolder.getText().toString().trim(), activity.getString(R.string.new_folder));
++                dialogNewFolder.dismiss();
+             });
+             btnCancel.setOnClickListener(new View.OnClickListener() {
+                 @Override
+@@ -639,16 +674,12 @@
+             menuDialog.dismiss();
+             footerLayout.setVisibility(View.GONE);
+             fileMoveLayout.setVisibility(View.VISIBLE);
+-            for (int i = 0; i < storageFilesModelArrayList.size(); i++) {
+-                StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(i);
+-                storageFilesModel.setCheckboxVisible(false);
+-            }
+-            storageListAdapter.notifyDataSetChanged();
+-            isCheckboxVisible = false;
++            resetCheckBox();
+         });
+         lblRenameFile.setOnClickListener(view -> {
++            menuDialog.dismiss();
+             StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(selectedFilePosition);
+-            renameFile(menuDialog, storageFilesModel.getFileName(), storageFilesModel.getFilePath(), selectedFilePosition);
++            renameFile(storageFilesModel.getFileName(), storageFilesModel.getFilePath(), selectedFilePosition);
+         });
+         lblFileDetails.setOnClickListener(view -> {
+             menuDialog.dismiss();
+@@ -775,10 +806,17 @@
+     }
+ 
+     private void hideAllCheckBook () {
+-        for (StorageFilesModel data: storageFilesModelArrayList
+-             ) {
++        for (StorageFilesModel data: storageFilesModelArrayList) {
+             data.setCheckboxVisible(false);
+         }
+         storageListAdapter.notifyDataSetChanged();
+     }
++
++    private void resetCheckBox () {
++        for (StorageFilesModel model:storageFilesModelArrayList) {
++            model.setCheckboxVisible(false);
++        }
++        storageListAdapter.notifyDataSetChanged();
++        isCheckboxVisible = false;
++    }
+ }
+Index: app/src/main/java/com/luckyba/myfile/storage/StorageViewModel.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/luckyba/myfile/storage/StorageViewModel.java	(revision 736109d18130383668fe153f5c264acf5b2b4a59)
++++ app/src/main/java/com/luckyba/myfile/storage/StorageViewModel.java	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -2,49 +2,120 @@
+ 
+ import android.app.Application;
+ 
++import androidx.lifecycle.MutableLiveData;
+ import androidx.lifecycle.ViewModel;
+ 
+ import com.luckyba.myfile.data.model.StorageFilesModel;
++import com.luckyba.myfile.data.model.TaskRunner;
+ import com.luckyba.myfile.data.reponsitory.FileRepository;
+ 
+ import java.util.ArrayList;
+ import java.util.HashMap;
++import java.util.List;
+ 
+ public class StorageViewModel extends ViewModel {
+     private FileRepository repository;
++    private TaskRunner taskRunner;
++    private MutableLiveData<ArrayList<StorageFilesModel>> loadAllData;
++    private MutableLiveData<ArrayList<StorageFilesModel>> moveLiveData;
++    private MutableLiveData<ArrayList<StorageFilesModel>> copyLiveData;
++    private MutableLiveData<StorageFilesModel> createFolderLiveData;
++    private MutableLiveData<StorageFilesModel> createFileLiveData;
++    private MutableLiveData<StorageFilesModel> reNameLiveData;
++    private MutableLiveData<List<Integer>> deleteNameLiveData;
++    private MutableLiveData<Boolean> extractLiveData;
++
+     public StorageViewModel(Application application, FileRepository repository) {
+         this.repository = repository;
++
++        taskRunner = new TaskRunner(repository);
++        loadAllData = new MutableLiveData<ArrayList<StorageFilesModel>>();
++        moveLiveData = new MutableLiveData<ArrayList<StorageFilesModel>>();
++        copyLiveData = new MutableLiveData<ArrayList<StorageFilesModel>>();
++        createFolderLiveData = new MutableLiveData<StorageFilesModel>();
++        createFileLiveData = new MutableLiveData<StorageFilesModel>();
++        reNameLiveData = new MutableLiveData<StorageFilesModel>();
++        deleteNameLiveData = new MutableLiveData<List<Integer>>();
++        extractLiveData = new MutableLiveData<Boolean>();
+     }
+ 
+-    public ArrayList<StorageFilesModel> getAllInternal (String filePath) {
+-        return repository.getAllFile(filePath);
++    public MutableLiveData<ArrayList<StorageFilesModel>> getLoadAllData() {
++        return loadAllData;
+     }
+ 
+-    public ArrayList<StorageFilesModel> move (String outPath, HashMap selectedFileHashMap) {
+-        return repository.move(outPath, selectedFileHashMap);
++    public MutableLiveData<ArrayList<StorageFilesModel>> getMoveLiveData() {
++        return moveLiveData;
+     }
+ 
+-    public ArrayList<StorageFilesModel> copy (String outPath, HashMap selectedFileHashMap) {
+-        return repository.copy(outPath, selectedFileHashMap);
++    public MutableLiveData<ArrayList<StorageFilesModel>> getCopyLiveData() {
++        return copyLiveData;
+     }
+ 
+-    public boolean delete (String root, String fileName, String pathName) {
+-        return repository.delete(root, fileName, pathName);
++    public MutableLiveData<StorageFilesModel> getCreateFolderLiveData() {
++        return createFolderLiveData;
+     }
+ 
+-    public boolean extract (String root, String fileName, String pathName) {
+-        return repository.extract(root, fileName, pathName);
++    public MutableLiveData<StorageFilesModel> getCreateFileLiveData() {
++        return createFileLiveData;
+     }
+ 
+-    public StorageFilesModel createFolder (String rootPath, String folderName, String defaultNameFolder) {
+-        return repository.createFolder(rootPath, folderName, defaultNameFolder);
++    public MutableLiveData<StorageFilesModel> getReNameLiveData() {
++        return reNameLiveData;
+     }
+ 
+-    public StorageFilesModel createFile (String rootPath, String fileName, String defaultName) {
+-        return repository.createFile(rootPath, fileName, defaultName);
++    public MutableLiveData<List<Integer>> getDeleteNameLiveData() {
++        return deleteNameLiveData;
+     }
+ 
+-    public StorageFilesModel reName (String root,String oldName, String newName, String pathName) {
+-        return repository.reName(root, oldName, newName, pathName);
++    public MutableLiveData<Boolean> getExtractLiveData() {
++        return extractLiveData;
++    }
++
++    public void getAllInternal(String filePath) {
++        taskRunner.executeAsync(new TaskRunner.LoadData(filePath), result -> {
++            loadAllData.setValue(result);
++        });
++    }
++
++    public void move(String outPath, HashMap selectedFileHashMap) {
++        taskRunner.executeAsync(new TaskRunner.MoveData(outPath, selectedFileHashMap), result -> {
++            moveLiveData.setValue(result);
++        });
++    }
++
++    public void copy(String outPath, HashMap selectedFileHashMap) {
++        taskRunner.executeAsync(new TaskRunner.CopyData(outPath, selectedFileHashMap), result -> {
++            moveLiveData.setValue(result);
++        });
++    }
++
++    public void delete(HashMap selectedPos) {
++        taskRunner.executeAsync(new TaskRunner.DeleteData(selectedPos), result -> {
++            deleteNameLiveData.setValue(result);
++        });
++    }
++
++    public void extract(String root, String fileName, String pathName) {
++        taskRunner.executeAsync(new TaskRunner.ExtractData(root, fileName, pathName), result -> {
++            extractLiveData.setValue(result);
++        });
++    }
++
++    public void createFolder(String rootPath, String folderName, String defaultNameFolder) {
++        taskRunner.executeAsync(new TaskRunner.CreateFolderData(rootPath, folderName, defaultNameFolder), result -> {
++            createFolderLiveData.setValue(result);
++        });
++    }
++
++    public void createFile(String rootPath, String fileName, String defaultName) {
++        taskRunner.executeAsync(new TaskRunner.CreateFileData(rootPath, fileName, defaultName), result -> {
++            createFileLiveData.setValue(result);
++        });
++    }
++
++    public void reName(String root, String oldName, String newName, String pathName) {
++        taskRunner.executeAsync(new TaskRunner.RenameData(root, oldName, newName, pathName), result -> {
++            reNameLiveData.setValue(result);
++        });
+     }
+ }
+Index: app/src/main/res/layout/custom_delete_file_dialog.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/custom_delete_file_dialog.xml	(revision 736109d18130383668fe153f5c264acf5b2b4a59)
++++ app/src/main/res/layout/custom_delete_file_dialog.xml	(revision 9980d6e2eb34e9f09da8dec2c79176623138e475)
+@@ -2,7 +2,6 @@
+ <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+-    android:background="@color/colorBlackTransparent"
+     android:orientation="vertical">
+ 
+     <LinearLayout
+@@ -42,7 +41,7 @@
+                 android:layout_width="0dp"
+                 android:layout_height="50dp"
+                 android:layout_weight="1"
+-                android:background="@color/colorWhite"
++                android:background="?android:attr/selectableItemBackground"
+                 android:clickable="true"
+                 android:text="@string/btn_cancel"
+                 android:textAllCaps="false"
+@@ -54,10 +53,10 @@
+                 android:layout_width="0dp"
+                 android:layout_height="50dp"
+                 android:layout_weight="1"
+-                android:background="@drawable/rectangle_ripple_effect"
+                 android:clickable="true"
+                 android:text="@string/btn_lbl_okay"
+                 android:textAllCaps="false"
++                android:background="?android:attr/selectableItemBackground"
+                 android:textColor="@color/my_file_color_primary_dark"
+                 android:textSize="16sp" />
+         </LinearLayout>
