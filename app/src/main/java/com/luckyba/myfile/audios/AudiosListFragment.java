@@ -59,7 +59,7 @@ public class AudiosListFragment extends Fragment implements CommonListener.Click
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         audiosViewModel = new ViewModelProvider(this, FactoryViewModel.getInstance()).get(AudiosViewModel.class);
         audiosListAdapter = new AudiosListAdapter(this);
-        audiosViewManager = new AudiosViewManager(mRootView, audiosViewModel, audiosListAdapter, getActivity());
+        audiosViewManager = new AudiosViewManager(mRootView, audiosViewModel, audiosListAdapter, getActivity(), this);
     }
 
     // TODO: Rename method, update argument and hook method into UI event

@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 import androidx.core.content.FileProvider;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,12 +30,15 @@ public class VideosViewManager {
     private RecyclerView recyclerView;
     private ArrayList<MediaFileListModel> mediaFileListModelArrayList;
     private LinearLayout noMediaLayout;
+    private LifecycleOwner lifecycleOwner;
 
-    public VideosViewManager(View mRootView, VideosViewModel videosViewModel, VideosListAdapter videosListAdapter, Activity activity) {
+    public VideosViewManager(View mRootView, VideosViewModel videosViewModel
+            , VideosListAdapter videosListAdapter, Activity activity, LifecycleOwner lifecycleOwner) {
         this.mRootView = mRootView;
         this.videosViewModel = videosViewModel;
         this.videosListAdapter = videosListAdapter;
         this.activity = activity;
+        this.lifecycleOwner = lifecycleOwner;
         init();
     }
 
@@ -50,21 +54,21 @@ public class VideosViewManager {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
         recyclerView.setAdapter(videosListAdapter);
-        getVideosList();
+        videosViewModel.getAllVideos(Constant.VideoDir);
+
+        videosViewModel.getListMutableLiveData().observe(lifecycleOwner, this::updateListVideo);
     }
 
 
-    private void getVideosList() {
-        mediaFileListModelArrayList = videosViewModel.getAllVideos(Constant.VideoDir);
-        if (mediaFileListModelArrayList.isEmpty()) {
+    private void updateListVideo(ArrayList<MediaFileListModel> mediaFileListModels) {
+        if (mediaFileListModels.isEmpty()) {
             noMediaLayout.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
             noMediaLayout.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
         }
-        Log.d("fdsafsaf2", mediaFileListModelArrayList.toString());
-
+        mediaFileListModelArrayList = mediaFileListModels;
         videosListAdapter.setData(mediaFileListModelArrayList);
         videosListAdapter.notifyDataSetChanged();
     }

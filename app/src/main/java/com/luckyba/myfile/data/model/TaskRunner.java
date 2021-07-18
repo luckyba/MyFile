@@ -171,5 +171,18 @@ public class TaskRunner {
         }
     }
 
+    public static class LoadAllMedia implements Callable<ArrayList<MediaFileListModel>> {
+        private final DictionaryModel dictionaryModel;
+
+        public LoadAllMedia(DictionaryModel dictionaryModel) {
+            this.dictionaryModel = dictionaryModel;
+        }
+
+        @Override
+        public ArrayList<MediaFileListModel> call() {
+            return fileRepository.getAllMedia(dictionaryModel);
+        }
+    }
+
 
 }

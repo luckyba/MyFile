@@ -64,7 +64,7 @@ public class VideosListFragment extends Fragment implements CommonListener.Click
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         videosListAdapter = new VideosListAdapter(this);
         videosViewModel = new ViewModelProvider(this, FactoryViewModel.getInstance()).get(VideosViewModel.class);
-        videosViewManager = new VideosViewManager(mRootView, videosViewModel, videosListAdapter, getActivity());
+        videosViewManager = new VideosViewManager(mRootView, videosViewModel, videosListAdapter, getActivity(), this);
     }
 
     public void onButtonPressed(Uri uri) {

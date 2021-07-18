@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,15 +34,18 @@ public class AudiosViewManager {
     private Activity activity;
 
     private RecyclerView recyclerView;
-    private ArrayList<MediaFileListModel> mediaFileListModels;
+    private ArrayList<MediaFileListModel> mediaFileListModelArrayList;
     private LinearLayout noMediaLayout;
     private MediaPlayer mediaPlayer;
+    private LifecycleOwner lifecycleOwner;
 
-    public AudiosViewManager(View mRootView, AudiosViewModel audiosViewModel, AudiosListAdapter audiosListAdapter, Activity activity) {
+    public AudiosViewManager(View mRootView, AudiosViewModel audiosViewModel
+            , AudiosListAdapter audiosListAdapter, Activity activity, LifecycleOwner lifecycleOwner) {
         this.mRootView = mRootView;
         this.audiosViewModel = audiosViewModel;
         this.audiosListAdapter = audiosListAdapter;
         this.activity = activity;
+        this.lifecycleOwner = lifecycleOwner;
         init();
     }
 
@@ -49,7 +53,7 @@ public class AudiosViewManager {
         recyclerView = (RecyclerView) mRootView.findViewById(R.id.recycler_view_audios_list);
         noMediaLayout = (LinearLayout) mRootView.findViewById(R.id.noMediaLayout);
 
-        mediaFileListModels = new ArrayList<>();
+        mediaFileListModelArrayList = new ArrayList<>();
         mediaPlayer = new MediaPlayer();
         recyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(MyApplication.getInstance().getApplicationContext());
@@ -57,7 +61,9 @@ public class AudiosViewManager {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(audiosListAdapter);
 
-        getMusicList();
+        audiosViewModel.getALLAudios(Constant.AudioDir);
+
+        audiosViewModel.getListMutableLiveData().observe(lifecycleOwner, this::updateMusicList);
 
     }
 
@@ -119,8 +125,7 @@ public class AudiosViewManager {
 
     }
 
-    private void getMusicList() {
-        mediaFileListModels = audiosViewModel.getALLAudios(Constant.AudioDir);
+    private void updateMusicList(ArrayList<MediaFileListModel> mediaFileListModels) {
         if (mediaFileListModels.isEmpty()) {
             noMediaLayout.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
@@ -128,14 +133,14 @@ public class AudiosViewManager {
             noMediaLayout.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
         }
-        Log.d("fdsafsaf", mediaFileListModels.toString());
-        audiosListAdapter.setData(mediaFileListModels);
+        mediaFileListModelArrayList = mediaFileListModels;
+        audiosListAdapter.setData(mediaFileListModelArrayList);
         audiosListAdapter.notifyDataSetChanged();
     }
 
     public void onItemClick(View view, int pos) {
         MyApplication.getInstance().trackEvent(activity.getString(R.string.play_audio), activity.getString(R.string.play_audio), activity.getString(R.string.my_file));
-        MediaFileListModel mediaFileListModel = mediaFileListModels.get(pos);
+        MediaFileListModel mediaFileListModel = mediaFileListModelArrayList.get(pos);
         showAudioPlayer(mediaFileListModel.getFileName(), mediaFileListModel.getFilePath());
     }
 
