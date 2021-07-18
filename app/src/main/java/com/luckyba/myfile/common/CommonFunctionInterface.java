@@ -1,7 +1,5 @@
 package com.luckyba.myfile.common;
 
-import android.app.Dialog;
-
 public interface CommonFunctionInterface {
     void createNewFile();
     void createNewFolder();

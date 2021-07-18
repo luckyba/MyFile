@@ -2,8 +2,6 @@ package com.luckyba.myfile.data.reponsitory;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
-import android.view.View;
 
 import com.luckyba.myfile.app.MyApplication;
 import com.luckyba.myfile.data.model.DictionaryModel;
@@ -15,8 +13,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Date;
@@ -144,18 +140,17 @@ public class FileRepository implements RepositoryInterface {
                 int i = Integer.parseInt(itr.next().toString());
                 File file = new File((String) selectedFileHashMap.get(i));
 
-                if (file.list().length > 0) {
-                    copyFileOrDirectory((String)selectedFileHashMap.get(i), outputPath);
 
-                    StorageFilesModel model = new StorageFilesModel
-                            .Builder(file.getName(), outputPath + "/" + file.getName())
-                            .setCheckBoxVisible(false)
-                            .setSelected(false)
-                            .setDir(new File(outputPath + "/" + file.getName()).isDirectory())
-                            .setType(checkType(file))
-                            .build();
-                    storageFilesModels.add(model);
-                }
+                copyFileOrDirectory((String) selectedFileHashMap.get(i), outputPath);
+
+                StorageFilesModel model = new StorageFilesModel
+                        .Builder(file.getName(), outputPath + "/" + file.getName())
+                        .setCheckBoxVisible(false)
+                        .setSelected(false)
+                        .setDir(new File(outputPath + "/" + file.getName()).isDirectory())
+                        .setType(checkType(file))
+                        .build();
+                storageFilesModels.add(model);
 
             }
         } catch (Exception e) {
