@@ -4,4 +4,7 @@
 /    <!-- When not selected, use white-->
     <item android:drawable="@drawable/ic_play"
         android:state_checked="false"/>
+
+    <item android:drawable="@drawable/ic_pause"
+        android:state_checked="true"/>
 </selector>

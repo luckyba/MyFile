@@ -17,6 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -112,36 +113,11 @@ public class FileRepository implements RepositoryInterface {
             while (itr.hasNext()) {
                 int i = Integer.parseInt(itr.next().toString());
                 File file = new File((String) Objects.requireNonNull(selectedFileHashMap.get(i)));
-                InputStream in = null;
-                OutputStream out = null;
-                try {
-                    //create output directory if it doesn't exist
-                    File dir = new File(outputPath);
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
-                    in = new FileInputStream((String) selectedFileHashMap.get(i));
-                    out = new FileOutputStream(outputPath + "/" + file.getName());
-                    byte[] buffer = new byte[1024];
-                    int read;
-                    while ((read = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, read);
-                    }
-                    in.close();
-                    in = null;
-                    // write the output file
-                    out.flush();
-                    out.close();
-                    out = null;
-                    // delete the original file
-                    new File((String) selectedFileHashMap.get(i)).delete();
-                } catch (Exception e) {
-                    MyApplication.getInstance().trackException(e);
-                    Log.e("tag", e.getMessage());
-                }
+                copyFileOrDirectory((String) Objects.requireNonNull(selectedFileHashMap.get(i)), outputPath);
+                deleteFileOrDirectory((String) Objects.requireNonNull(selectedFileHashMap.get(i)));
 
                 StorageFilesModel model = new StorageFilesModel
-                        .Builder(outputPath + "/" + file.getName(), file.getName())
+                        .Builder(file.getName(), outputPath + "/" + file.getName())
                         .setSelected(false)
                         .setCheckBoxVisible(false)
                         .setDir(new File(outputPath + "/" + file.getName()).isDirectory())
@@ -167,24 +143,20 @@ public class FileRepository implements RepositoryInterface {
             while (itr.hasNext()) {
                 int i = Integer.parseInt(itr.next().toString());
                 File file = new File((String) selectedFileHashMap.get(i));
-                InputStream in = new FileInputStream((String) selectedFileHashMap.get(i));
-                OutputStream out = new FileOutputStream(outputPath + "/" + file.getName());
-                // Transfer bytes from in to out
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
+
+                if (file.list().length > 0) {
+                    copyFileOrDirectory((String)selectedFileHashMap.get(i), outputPath);
+
+                    StorageFilesModel model = new StorageFilesModel
+                            .Builder(file.getName(), outputPath + "/" + file.getName())
+                            .setCheckBoxVisible(false)
+                            .setSelected(false)
+                            .setDir(new File(outputPath + "/" + file.getName()).isDirectory())
+                            .setType(checkType(file))
+                            .build();
+                    storageFilesModels.add(model);
                 }
-                in.close();
-                out.close();
-                StorageFilesModel model = new StorageFilesModel
-                        .Builder(file.getName(), outputPath + "/" + file.getName())
-                        .setCheckBoxVisible(false)
-                        .setSelected(false)
-                        .setDir(new File(outputPath + "/" + file.getName()).isDirectory())
-                        .setType(checkType(file))
-                        .build();
-                storageFilesModels.add(model);
+
             }
         } catch (Exception e) {
             MyApplication.getInstance().trackException(e);
@@ -192,6 +164,55 @@ public class FileRepository implements RepositoryInterface {
         }
 
         return storageFilesModels;
+    }
+
+    public void copyFileOrDirectory(String srcDir, String dstDir) {
+
+        try {
+            File src = new File(srcDir);
+            File dst = new File(dstDir, src.getName());
+
+            if (src.isDirectory()) {
+
+                String files[] = src.list();
+                int filesLength = files.length;
+                for (int i = 0; i < filesLength; i++) {
+                    String src1 = (new File(src, files[i]).getPath());
+                    String dst1 = dst.getPath();
+                    copyFileOrDirectory(src1, dst1);
+
+                }
+            } else {
+                copyFile(src, dst);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void copyFile(File sourceFile, File destFile) throws IOException {
+        if (!destFile.getParentFile().exists())
+            destFile.getParentFile().mkdirs();
+
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+
+        FileChannel source = null;
+        FileChannel destination = null;
+
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            destination.transferFrom(source, 0, source.size());
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+            if (destination != null) {
+                destination.close();
+            }
+        }
     }
 
     @Override
@@ -202,17 +223,40 @@ public class FileRepository implements RepositoryInterface {
             Iterator itr = set.iterator();
             while (itr.hasNext()) {
                 int i = Integer.parseInt(itr.next().toString());
-                File deleteFile = new File((String) selectedFileHashMap.get(i));//create file for selected file
-                boolean isDeleteFile = deleteFile.delete();//delete the file from memory
-                if (isDeleteFile) {
-                    listDeleted.add(i);
-                }
+                File file = new File((String) selectedFileHashMap.get(i));
+                deleteFileOrDirectory((String) selectedFileHashMap.get(i));
+                file.delete();
+                listDeleted.add(i);
             }
         } catch (Exception e) {
             MyApplication.getInstance().trackException(e);
             e.printStackTrace();
         }
+
         return listDeleted;
+    }
+
+    private void deleteFileOrDirectory(String srcDir) {
+
+        try {
+            File deleteFile = new File(srcDir);
+
+            if (deleteFile.isDirectory()) {
+
+                String files[] = deleteFile.list();
+                int filesLength = deleteFile.list().length;
+                for (int i = 0; i < filesLength; i++) {
+                    String src1 = (new File(deleteFile, files[i]).getPath());
+                    deleteFileOrDirectory(src1);
+
+                }
+                deleteFile.delete();
+            } else {
+                deleteFile.delete();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

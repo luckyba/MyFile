@@ -243,7 +243,7 @@ public class StorageViewManager {
         progressBar.setVisibility(View.GONE);
     }
 
-    private void updateAfterMove (ArrayList<StorageFilesModel> storageFilesModels) {
+    private void updateAfterMove(ArrayList<StorageFilesModel> storageFilesModels) {
         if (noMediaLayout.getVisibility() == View.VISIBLE) {
             noMediaLayout.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
@@ -254,11 +254,13 @@ public class StorageViewManager {
         } else {
             Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.unable_to_process_this_action), Toast.LENGTH_SHORT).show();
         }
+        selectedFileHashMap.clear();
+
         resetCheckBox();
         progressBar.setVisibility(View.GONE);
     }
 
-    private void updateAfterCopyFile (ArrayList<StorageFilesModel> storageFilesModels) {
+    private void updateAfterCopyFile(ArrayList<StorageFilesModel> storageFilesModels) {
         //if storageFilesModels large thread to handle it
         if (noMediaLayout.getVisibility() == View.VISIBLE) {
             noMediaLayout.setVisibility(View.GONE);
@@ -275,21 +277,21 @@ public class StorageViewManager {
         progressBar.setVisibility(View.GONE);
     }
 
-    private void updateAfterRename (StorageFilesModel storageFilesModel) {
+    private void updateAfterRename(StorageFilesModel storageFilesModel) {
         if (storageFilesModel != null) {
             storageFilesModel.setType(storageFilesModelArrayList.get(selectedFilePosition).getType());
             storageFilesModelArrayList.get(selectedFilePosition);
             storageFilesModelArrayList.remove(selectedFilePosition);
             storageFilesModelArrayList.add(selectedFilePosition, storageFilesModel);
-            storageListAdapter.notifyDataSetChanged();
-        } else{
+        } else {
             Toast.makeText(MyApplication.getInstance().getApplicationContext(), MyApplication.getInstance().getApplicationContext().getString(R.string.msg_prompt_not_renamed_you_dont_have_permission_to_rename), Toast.LENGTH_SHORT).show();
         }
+        selectedFileHashMap.clear();
 
         resetCheckBox();
     }
 
-    private void updateAfterCreateNewFile (StorageFilesModel storageFilesModel) {
+    private void updateAfterCreateNewFile(StorageFilesModel storageFilesModel) {
         if (storageFilesModel != null) {
             if (noMediaLayout.getVisibility() == View.VISIBLE) {
                 noMediaLayout.setVisibility(View.GONE);
@@ -303,7 +305,7 @@ public class StorageViewManager {
         }
     }
 
-    private void updateAfterCreateNewFolder (StorageFilesModel storageFilesModel) {
+    private void updateAfterCreateNewFolder(StorageFilesModel storageFilesModel) {
         if (storageFilesModel != null) {
             if (noMediaLayout.getVisibility() == View.VISIBLE) {
                 noMediaLayout.setVisibility(View.GONE);
@@ -317,115 +319,114 @@ public class StorageViewManager {
         }
     }
 
-    private void updateAfterDelete (List<Integer> listDeleted) {
+    private void updateAfterDelete(List<Integer> listDeleted) {
         selectedFileHashMap.clear();
         listDeleted.sort(Comparator.reverseOrder());
-        for (Integer pos: listDeleted) {
-            storageFilesModelArrayList.remove((int)pos);
+        for (Integer pos : listDeleted) {
+            storageFilesModelArrayList.remove((int) pos);
         }
         if (storageFilesModelArrayList.isEmpty()) {
             noMediaLayout.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         }
+        progressBar.setVisibility(View.GONE);
+        selectedFileHashMap.clear();
+
         resetCheckBox();
     }
 
-    public void onBackPressed (int navItemIndex, Activity activity) {
-        if (selectedFileHashMap.size() == 0)
-            if (footerLayout.getVisibility() != View.GONE) {
-                Animation topToBottom = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
-                        R.anim.top_bottom);
-                footerLayout.startAnimation(topToBottom);
-                footerLayout.setVisibility(View.GONE);
-            } else {
-                if (isCheckboxVisible) {
-                    for (int i = 0; i < storageFilesModelArrayList.size(); i++) {
-                        StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(i);
-                        storageFilesModel.setCheckboxVisible(false);
-                    }
-                    storageListAdapter.notifyDataSetChanged();
-                    isCheckboxVisible = false;
-                } else {
-                    if (navItemIndex == 3) {
-                        if (arrayListFilePaths.size() == 1) {
-                            Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.please_click_back_again_to_exist), Toast.LENGTH_SHORT).show();
-                        }
-                        if (arrayListFilePaths.size() != 0) {
-                            if (arrayListFilePaths.size() >= 2) {
-                                storageFilesModelArrayList.clear();
-//                                getFilesList(arrayListFilePaths.get(arrayListFilePaths.size() - 2));
-                                rootPath = arrayListFilePaths.get(arrayListFilePaths.size() - 2);
-                                storageViewModel.getAllInternal(rootPath);
+    public void onBackPressed(int navItemIndex, Activity activity) {
+        if (footerLayout.getVisibility() != View.GONE) {
+            Animation topToBottom = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
+                    R.anim.top_bottom);
+            footerLayout.startAnimation(topToBottom);
+            footerLayout.setVisibility(View.GONE);
+            selectedFileHashMap.clear();
 
-                                storageListAdapter.notifyDataSetChanged();
-                            }
-                            arrayListFilePaths.remove(arrayListFilePaths.size() - 1);
+            resetCheckBox();
+        } else {
 
-                            arrayListFileNames.remove(arrayListFileNames.size() -1);
-                            viewBy(false);
-                            listPathAdapter.setData(arrayListFileNames);
-                            listPathAdapter.notifyDataSetChanged();
-                        } else {
-                            activity.finish();
-                            System.exit(0);
-                        }
-                    }
+            if (navItemIndex == 3) {
+                if (arrayListFilePaths.size() == 1) {
+                    Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.please_click_back_again_to_exist), Toast.LENGTH_SHORT).show();
                 }
+                if (arrayListFilePaths.size() != 0) {
+                    if (arrayListFilePaths.size() >= 2) {
+                        storageFilesModelArrayList.clear();
+//                                getFilesList(arrayListFilePaths.get(arrayListFilePaths.size() - 2));
+                        rootPath = arrayListFilePaths.get(arrayListFilePaths.size() - 2);
+                        storageViewModel.getAllInternal(rootPath);
+
+                        storageListAdapter.notifyDataSetChanged();
+                    }
+                    arrayListFilePaths.remove(arrayListFilePaths.size() - 1);
+
+                    arrayListFileNames.remove(arrayListFileNames.size() - 1);
+                    viewBy(false);
+                    listPathAdapter.setData(arrayListFileNames);
+                    listPathAdapter.notifyDataSetChanged();
+                } else {
+                    activity.finish();
+                    System.exit(0);
+                }
+
             }
+        }
+
     }
 
     public void onItemClick(View view, int position) {
-        if (view.getId() == R.id.path_item_layout) {
-            if (position != arrayListFileNames.size() -1) {
-                openFile(arrayListFileNames.get(position), arrayListFilePaths.get(position));
-                int leng = arrayListFileNames.size();
-                for (int i = leng-1; i > position ; i--) {
-                    arrayListFileNames.remove(i);
-                    arrayListFilePaths.remove(i);
+            if (view.getId() == R.id.path_item_layout) {
+                if (position != arrayListFileNames.size() - 1) {
+                    openFile(arrayListFileNames.get(position), arrayListFilePaths.get(position));
+                    int leng = arrayListFileNames.size();
+                    for (int i = leng - 1; i > position; i--) {
+                        arrayListFileNames.remove(i);
+                        arrayListFilePaths.remove(i);
+                    }
+                    viewBy(false);
+                    listPathAdapter.setData(arrayListFileNames);
+                    listPathAdapter.notifyDataSetChanged();
                 }
-                viewBy(false);
-                listPathAdapter.setData(arrayListFileNames);
-                listPathAdapter.notifyDataSetChanged();
-            }
-        } else {
-            StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(position);
-            if (storageFilesModel.isCheckboxVisible()) {//if list item selected
-                if (storageFilesModel.isSelected()) {
-                    storageFilesModel.setSelected(false);
-                    storageFilesModelArrayList.remove(position);
-                    storageFilesModelArrayList.add(position, storageFilesModel);
-                    storageListAdapter.notifyDataSetChanged();
-                    selectedFileHashMap.remove(position);
+            } else {
+                StorageFilesModel storageFilesModel = storageFilesModelArrayList.get(position);
+                if (storageFilesModel.isCheckboxVisible()) {//if list item selected
+                    if (storageFilesModel.isSelected()) {
+                        storageFilesModel.setSelected(false);
+                        storageFilesModelArrayList.remove(position);
+                        storageFilesModelArrayList.add(position, storageFilesModel);
+                        storageListAdapter.notifyDataSetChanged();
+                        selectedFileHashMap.remove(position);
+                    } else {
+                        selectedFileHashMap.put(position, storageFilesModel.getFilePath());
+                        storageFilesModel.setSelected(true);
+                        selectedFilePosition = position;
+                        storageFilesModelArrayList.remove(position);
+                        storageFilesModelArrayList.add(position, storageFilesModel);
+                        storageListAdapter.notifyDataSetChanged();
+                    }
                 } else {
-                    selectedFileHashMap.put(position, storageFilesModel.getFilePath());
-                    storageFilesModel.setSelected(true);
-                    selectedFilePosition = position;
-                    storageFilesModelArrayList.remove(position);
-                    storageFilesModelArrayList.add(position, storageFilesModel);
-                    storageListAdapter.notifyDataSetChanged();
+                    fileExtension = storageFilesModel.getFileName().substring(storageFilesModel.getFileName().lastIndexOf(".") + 1);//file extension (.mp3,.png,.pdf)
+                    openFile(storageFilesModel.getFileName(), storageFilesModel.getFilePath());
                 }
-            } else {
-                fileExtension = storageFilesModel.getFileName().substring(storageFilesModel.getFileName().lastIndexOf(".") + 1);//file extension (.mp3,.png,.pdf)
-                openFile(storageFilesModel.getFileName(), storageFilesModel.getFilePath());
-            }
-            if (selectedFileHashMap.isEmpty()) {
-                if (footerLayout.getVisibility() != View.GONE) {
-                    Animation topToBottom = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
-                            R.anim.top_bottom);
-                    footerLayout.startAnimation(topToBottom);
-                    footerLayout.setVisibility(View.GONE);
-                }
-            } else {
-                if (footerLayout.getVisibility() != View.VISIBLE
-                        && fileCopyLayout.getVisibility() == View.GONE
-                        && fileMoveLayout.getVisibility() == View.GONE) {
-                    Animation bottomToTop = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
-                            R.anim.bottom_top);
-                    footerLayout.startAnimation(bottomToTop);
-                    footerLayout.setVisibility(View.VISIBLE);
+                if (selectedFileHashMap.isEmpty()) {
+                    if (footerLayout.getVisibility() != View.GONE) {
+                        Animation topToBottom = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
+                                R.anim.top_bottom);
+                        footerLayout.startAnimation(topToBottom);
+                        footerLayout.setVisibility(View.GONE);
+                    }
+                } else {
+                    if (footerLayout.getVisibility() != View.VISIBLE
+                            && fileCopyLayout.getVisibility() == View.GONE
+                            && fileMoveLayout.getVisibility() == View.GONE) {
+                        Animation bottomToTop = AnimationUtils.loadAnimation(MyApplication.getInstance().getApplicationContext(),
+                                R.anim.bottom_top);
+                        footerLayout.startAnimation(bottomToTop);
+                        footerLayout.setVisibility(View.VISIBLE);
+                    }
                 }
             }
-        }
 
     }
 
@@ -529,6 +530,7 @@ public class StorageViewManager {
         }
         btnOkay.setOnClickListener(view -> {
             dialogDeleteFile.dismiss();
+            progressBar.setVisibility(View.VISIBLE);
             storageViewModel.delete(selectedFileHashMap);
         });
         btnCancel.setOnClickListener(view -> dialogDeleteFile.dismiss());
@@ -780,9 +782,10 @@ public class StorageViewManager {
 
     }
 
-    private void resetCheckBox () {
-        for (StorageFilesModel model:storageFilesModelArrayList) {
+    private void resetCheckBox() {
+        for (StorageFilesModel model : storageFilesModelArrayList) {
             model.setCheckboxVisible(false);
+            model.setSelected(false);
         }
         storageListAdapter.notifyDataSetChanged();
         isCheckboxVisible = false;
