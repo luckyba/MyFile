@@ -84,4 +84,8 @@
     <string name="fail_extracted"> Fail extracted</string>
     <string name="unable_to_process_this_action">Unable to process this action</string>
     <string name="you_dont_have_management_permission_so_you_cant_use_some_funtions">You don\'/t have management permission, so You can\'/t use some funtions</string>
+    <string name="are_you_want_to_extract_this_file">Are you sure you want to extract %1$s </string>
+    <string name="please_enter_file_name">Please enter file name</string>
+    <string name="size_leng_mb">Size : %1d MB</string>
+    <string name="size_leng_kb">Size: %1d KB</string>
 </resources>

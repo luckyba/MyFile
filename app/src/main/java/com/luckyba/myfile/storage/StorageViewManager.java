@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Environment;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.Animation;
@@ -33,10 +32,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.luckyba.myfile.R;
 import com.luckyba.myfile.animations.AVLoadingIndicatorView;
 import com.luckyba.myfile.app.MyApplication;
-import com.luckyba.myfile.common.CommonFunctionInterface;
 import com.luckyba.myfile.common.ListPathAdapter;
 import com.luckyba.myfile.common.viewer.FullImageViewActivity;
 import com.luckyba.myfile.common.viewer.TextFileViewActivity;
+import com.luckyba.myfile.data.model.DataObserver;
 import com.luckyba.myfile.data.model.StorageFilesModel;
 import com.luckyba.myfile.helper.StorageHelper;
 import com.luckyba.myfile.utils.Constant;
@@ -47,9 +46,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 public class StorageViewManager {
     private View mRootView;
@@ -83,7 +80,7 @@ public class StorageViewManager {
     private final HashMap selectedFileHashMap = new HashMap();
     private boolean isCheckboxVisible = false;
     private boolean isVerticalList = true;
-    private int numCol = 1;
+    private DataObserver dataObserve;
 
     public StorageViewManager(View root, StorageViewModel viewModel
             , StorageListAdapter adapter, ListPathAdapter listPathAdapter, Activity activity, String[] agr
@@ -96,6 +93,10 @@ public class StorageViewManager {
         this.lifecycleOwner = lifecycleOwner;
         mParam1 = agr[0];
         init();
+    }
+
+    public void onDestroy () {
+        dataObserve.stopWatching();
     }
 
     private void init() {
@@ -111,6 +112,7 @@ public class StorageViewManager {
             arrayListFilePaths.add(rootPath);
             arrayListFileNames.add(activity.getString(R.string.internal_storage));
             storageViewModel.getAllInternal(rootPath);
+
         } else {
             if (StorageHelper.isExternalStorageReadable()) {
                 rootPath = System.getenv("SECONDARY_STORAGE");
@@ -128,6 +130,10 @@ public class StorageViewManager {
                 noMediaLayout.setVisibility(View.VISIBLE);
             }
         }
+        dataObserve = new DataObserver(new File(rootPath));
+        dataObserve.setStorageViewModel(storageViewModel);
+        dataObserve.startWatching();
+
     }
 
     private void initView() {
@@ -198,6 +204,7 @@ public class StorageViewManager {
         tvPasteFile.setOnClickListener(view -> {
             progressBar.setVisibility(View.VISIBLE);
             fileCopyLayout.setVisibility(View.GONE);
+            dataObserve.stopWatching();
             storageViewModel.copy(arrayListFilePaths.get(arrayListFilePaths.size() - 1), selectedFileHashMap);
         });
 
@@ -232,6 +239,7 @@ public class StorageViewManager {
         storageFilesModelArrayList = data;
         storageListAdapter.setData(storageFilesModelArrayList);
         storageListAdapter.notifyDataSetChanged();
+        initListenDataChange();
     }
 
     private void updateAfterExtract(Boolean result) {
@@ -241,6 +249,7 @@ public class StorageViewManager {
             Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.fail_extracted), Toast.LENGTH_SHORT).show();
         }
         progressBar.setVisibility(View.GONE);
+        initListenDataChange();
     }
 
     private void updateAfterMove(ArrayList<StorageFilesModel> storageFilesModels) {
@@ -303,6 +312,7 @@ public class StorageViewManager {
         } else {
             Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_file_not_created_you_dont_have_permission_to_create_or_already_existed), Toast.LENGTH_SHORT).show();
         }
+        initListenDataChange();
     }
 
     private void updateAfterCreateNewFolder(StorageFilesModel storageFilesModel) {
@@ -317,6 +327,7 @@ public class StorageViewManager {
         } else {
             Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.msg_prompt_folder_not_created_you_dont_have_permission_to_create), Toast.LENGTH_SHORT).show();
         }
+        initListenDataChange();
     }
 
     private void updateAfterDelete(List<Integer> listDeleted) {
@@ -331,7 +342,6 @@ public class StorageViewManager {
         }
         progressBar.setVisibility(View.GONE);
         selectedFileHashMap.clear();
-
         resetCheckBox();
     }
 
@@ -355,6 +365,8 @@ public class StorageViewManager {
                         storageFilesModelArrayList.clear();
 //                                getFilesList(arrayListFilePaths.get(arrayListFilePaths.size() - 2));
                         rootPath = arrayListFilePaths.get(arrayListFilePaths.size() - 2);
+
+                        dataObserve.stopWatching();
                         storageViewModel.getAllInternal(rootPath);
 
                         storageListAdapter.notifyDataSetChanged();
@@ -460,6 +472,7 @@ public class StorageViewManager {
                 arrayListFilePaths.add(filePath);
 
                 rootPath = filePath;
+                dataObserve.stopWatching();
                 storageViewModel.getAllInternal(filePath);
 
                 viewBy(false);
@@ -500,7 +513,7 @@ public class StorageViewManager {
             } else {
                 Toast.makeText(MyApplication.getInstance(), activity.getString(R.string.there_is_no_app_to_handle_this_type_of_file), Toast.LENGTH_SHORT).show();
             }
-        } else if (fileExtension.equals("mp4") || fileExtension.equals("3gp") || fileExtension.equals("wmv")) {
+        } else if (Constant.listVideoType.contains(fileExtension)) {
             Uri photoURI = FileProvider.getUriForFile(activity, MyApplication.getInstance() + ".provider"
                     , new File(filePath));
             Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -531,6 +544,7 @@ public class StorageViewManager {
         btnOkay.setOnClickListener(view -> {
             dialogDeleteFile.dismiss();
             progressBar.setVisibility(View.VISIBLE);
+            dataObserve.stopWatching();
             storageViewModel.delete(selectedFileHashMap);
         });
         btnCancel.setOnClickListener(view -> dialogDeleteFile.dismiss());
@@ -542,7 +556,7 @@ public class StorageViewManager {
         Button btnOkay = (Button) extractZipDialog.findViewById(R.id.btn_okay);
         Button btnCancel = (Button) extractZipDialog.findViewById(R.id.btn_cancel);
         final TextView tvFileName = (TextView) extractZipDialog.findViewById(R.id.id_file_name);
-        tvFileName.setText("Are you sure you want to extract " + fileName);
+        tvFileName.setText(activity.getString(R.string.are_you_want_to_extract_this_file, fileName));
         btnCancel.setOnClickListener(view -> {
             extractZipDialog.dismiss();
             tvFileName.setText("");
@@ -550,6 +564,7 @@ public class StorageViewManager {
         btnOkay.setOnClickListener(view -> {
             extractZipDialog.dismiss();
             progressBar.setVisibility(View.VISIBLE);
+            dataObserve.stopWatching();
             // need to handle thread here.
             storageViewModel.extract(rootPath, fileName, filePath);
         });
@@ -570,8 +585,9 @@ public class StorageViewManager {
         txtRenameFile.setText(fileName);
         btnRename.setOnClickListener(view -> {
             if (txtRenameFile.getText().toString().trim().length() == 0) {
-                Toast.makeText(MyApplication.getInstance().getApplicationContext(), "Please enter file name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MyApplication.getInstance().getApplicationContext(), activity.getString(R.string.please_enter_file_name), Toast.LENGTH_SHORT).show();
             }
+            dataObserve.stopWatching();
             storageViewModel.reName(rootPath, fileName, txtRenameFile.getText().toString().trim(), filePath);
             dialogRenameFile.dismiss();
         });
@@ -593,6 +609,7 @@ public class StorageViewManager {
             Button btnCreate = (Button) dialogNewFile.findViewById(R.id.btn_create);
             Button btnCancel = (Button) dialogNewFile.findViewById(R.id.btn_cancel);
             btnCreate.setOnClickListener(view -> {
+                dataObserve.stopWatching();
                 storageViewModel.createFile(rootPath, txtNewFile.getText().toString().trim(), activity.getString(R.string.new_file));
                 dialogNewFile.dismiss();
             });
@@ -612,6 +629,7 @@ public class StorageViewManager {
             Button btnCreate = (Button) dialogNewFolder.findViewById(R.id.btn_create);
             Button btnCancel = (Button) dialogNewFolder.findViewById(R.id.btn_cancel);
             btnCreate.setOnClickListener(view -> {
+                dataObserve.stopWatching();
                 storageViewModel.createFolder(rootPath, txtNewFolder.getText().toString().trim(), activity.getString(R.string.new_folder));
                 dialogNewFolder.dismiss();
             });
@@ -693,9 +711,9 @@ public class StorageViewManager {
             length = length / 1024;
             if (length >= 1024) {
                 length = length / 1024;
-                lblSize.setText("Size :" + length + " MB");
+                lblSize.setText(activity.getString(R.string.size_leng_mb, length));
             } else {
-                lblSize.setText("Size :" + length + " KB");
+                lblSize.setText(activity.getString(R.string.size_leng_kb, length));
             }
         }
         Date lastModDate = new Date(file.lastModified());
@@ -789,5 +807,11 @@ public class StorageViewManager {
         }
         storageListAdapter.notifyDataSetChanged();
         isCheckboxVisible = false;
+        initListenDataChange();
+    }
+
+    private void initListenDataChange () {
+        dataObserve = new DataObserver(new File(rootPath));
+        dataObserve.startWatching();
     }
 }

@@ -12,7 +12,6 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.Html;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;

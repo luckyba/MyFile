@@ -26,6 +26,8 @@ import com.luckyba.myfile.common.ListPathAdapter;
 import com.luckyba.myfile.data.model.DataObserver;
 import com.luckyba.myfile.utils.PermissionUtils;
 
+import java.io.File;
+
 import static com.luckyba.myfile.utils.Constant.SCAN_DATA_CALLBACK;
 
 
@@ -45,7 +47,6 @@ public class StorageFragment extends Fragment implements CommonListener.Communic
     private StorageViewModel storageViewModel;
     private View mRootView;
 
-    private DataObserver dataObserve;
 
     public StorageFragment() {
         // Required empty public constructor
@@ -93,20 +94,9 @@ public class StorageFragment extends Fragment implements CommonListener.Communic
 //                .registerContentObserver(
 //                        Uri.fromFile(Environment.getExternalStorageDirectory()), true,
 //                        new MyObserver(mHandler));
-        dataObserve = new DataObserver(Environment.getExternalStorageDirectory());
-        dataObserve.startWatching();
+
 
     }
-
-    private Handler mHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            if (msg.what == SCAN_DATA_CALLBACK) {
-                Toast.makeText(getActivity(), " " + msg.obj.toString(), Toast.LENGTH_SHORT).show();
-            }
-            return true;
-        }
-    });
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
@@ -144,7 +134,8 @@ public class StorageFragment extends Fragment implements CommonListener.Communic
     public void onDestroy() {
         storageViewModel = null;
         storageListAdapter = null;
-        dataObserve.stopWatching();
+        storageViewManager.onDestroy();
+
         super.onDestroy();
     }
 
